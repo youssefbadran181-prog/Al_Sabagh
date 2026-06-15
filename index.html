@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PharmaCare – صيدليتك الإلكترونية الموثوقة</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Firebase Compat SDK (works without bundler / file://) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- =================== NAVBAR =================== -->
+<header class="navbar" id="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <span class="logo-icon">✚</span>
+      <span class="logo-text">PharmaCare</span>
+    </div>
+    <nav class="nav-links" id="navLinks">
+      <a href="#home">الرئيسية</a>
+      <a href="#products">المنتجات</a>
+      <a href="#offers">العروض</a>
+      <a href="#order">اطلب الآن</a>
+      <a href="#contact">تواصل معنا</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="cartBtn" title="سلة التسوق">
+        🛒 <span class="cart-count" id="cartCount">0</span>
+      </button>
+      <button class="icon-btn" id="authBtn">تسجيل الدخول</button>
+      <button class="hamburger" id="hamburger">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- =================== HERO =================== -->
+<section class="hero" id="home">
+  <div class="hero-content">
+    <span class="hero-badge">🚀 صيدلية إلكترونية معتمدة</span>
+    <h1>صيدليتك الإلكترونية<br /><span class="highlight">الموثوقة</span><br />طلبك يوصلك لحد البيت</h1>
+    <p>من هنا تقدر تطلب الدواء، الفيتامينات، مستلزمات العناية الشخصية بأسعار منافسة وتوصيل سريع لباب بيتك.</p>
+    <div class="hero-buttons">
+      <a href="#products" class="btn btn-primary">تصفح المنتجات</a>
+      <a href="#order" class="btn btn-outline">اطلب عبر الروشتة</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><strong>+15K</strong><span>عميل راضي</span></div>
+      <div class="stat"><strong>+50K</strong><span>منتج متاح</span></div>
+      <div class="stat"><strong>24/7</strong><span>دعم فوري</span></div>
+    </div>
+  </div>
+  <div class="hero-image">
+    <div class="hero-card">
+      <div class="hero-card-header">
+        <span class="logo-icon">✚</span> <strong>PharmaCare</strong>
+      </div>
+      <div class="hero-card-items">
+        <div class="card-item"><span class="dot teal"></span>فيتامين C 1000mg</div>
+        <div class="card-item"><span class="dot teal"></span>أوميجا 3</div>
+        <div class="card-item"><span class="dot yellow"></span>كريم SPF 50</div>
+        <div class="card-item"><span class="dot teal"></span>باناكول أقراص</div>
+      </div>
+      <div class="hero-card-footer">
+        <span class="badge-pill">توصيل خلال 2 ساعة</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== TRUST BAR =================== -->
+<div class="trust-bar">
+  <div class="trust-item"><span>✅</span> أدوية أصلية 100%</div>
+  <div class="trust-item"><span>🚚</span> توصيل سريع لبابك</div>
+  <div class="trust-item"><span>🔒</span> دفع آمن ومضمون</div>
+  <div class="trust-item"><span>📞</span> دعم 24 ساعة</div>
+</div>
+
+<!-- =================== CATEGORIES =================== -->
+<section class="categories" id="categories">
+  <div class="section-header">
+    <h2>تسوق حسب الفئة</h2>
+    <p>اختار اللي تحتاجه من أقسامنا المتنوعة</p>
+  </div>
+  <div class="cat-grid">
+    <div class="cat-card" data-cat="vitamins">
+      <div class="cat-icon">💊</div>
+      <div class="cat-name">فيتامينات ومكملات</div>
+      <div class="cat-count" id="count-vitamins">0 منتج</div>
+    </div>
+    <div class="cat-card" data-cat="skincare">
+      <div class="cat-icon">🧴</div>
+      <div class="cat-name">العناية بالبشرة</div>
+      <div class="cat-count" id="count-skincare">0 منتج</div>
+    </div>
+    <div class="cat-card" data-cat="medicine">
+      <div class="cat-icon">💉</div>
+      <div class="cat-name">أدوية ومستلزمات</div>
+      <div class="cat-count" id="count-medicine">0 منتج</div>
+    </div>
+    <div class="cat-card" data-cat="baby">
+      <div class="cat-icon">👶</div>
+      <div class="cat-name">منتجات الأطفال</div>
+      <div class="cat-count" id="count-baby">0 منتج</div>
+    </div>
+    <div class="cat-card" data-cat="dental">
+      <div class="cat-icon">🦷</div>
+      <div class="cat-name">العناية بالأسنان</div>
+      <div class="cat-count" id="count-dental">0 منتج</div>
+    </div>
+    <div class="cat-card" data-cat="devices">
+      <div class="cat-icon">🩺</div>
+      <div class="cat-name">أجهزة طبية</div>
+      <div class="cat-count" id="count-devices">0 منتج</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== FLASH OFFER BANNER =================== -->
+<section class="flash-banner" id="offers">
+  <div class="flash-content">
+    <div class="flash-text">
+      <span class="flash-label">🔥 عرض حصري لفترة محدودة</span>
+      <h2>خصم 20% على كل منتجات<br />العناية بالبشرة والحماية من الشمس</h2>
+      <p>استخدم كود <strong>SUN20</strong> عند الدفع</p>
+      <a href="#products" class="btn btn-primary">تسوق الآن ←</a>
+    </div>
+    <div class="flash-timer" id="flashTimer">
+      <div class="timer-block"><span id="t-hours">00</span><small>ساعة</small></div>
+      <div class="timer-sep">:</div>
+      <div class="timer-block"><span id="t-mins">00</span><small>دقيقة</small></div>
+      <div class="timer-sep">:</div>
+      <div class="timer-block"><span id="t-secs">00</span><small>ثانية</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== PRODUCTS =================== -->
+<section class="products-section" id="products">
+  <div class="section-header">
+    <h2>⚡ عروض فلاش سريعة</h2>
+    <p>أفضل المنتجات بأحسن الأسعار</p>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">الكل</button>
+    <button class="filter-btn" data-filter="vitamins">فيتامينات</button>
+    <button class="filter-btn" data-filter="skincare">بشرة</button>
+    <button class="filter-btn" data-filter="medicine">أدوية</button>
+    <button class="filter-btn" data-filter="baby">أطفال</button>
+    <button class="filter-btn" data-filter="dental">أسنان</button>
+    <button class="filter-btn" data-filter="devices">أجهزة</button>
+  </div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="ابحث عن منتج، دواء، أو مكمل غذائي..." />
+    <button id="searchBtn">🔍</button>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="products-grid" id="productsGrid">
+    <div class="loading-spinner" id="loadingSpinner">
+      <div class="spinner"></div>
+      <p>جاري تحميل المنتجات...</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" id="pagination"></div>
+</section>
+
+<!-- =================== ORDER BY PRESCRIPTION =================== -->
+<section class="order-section" id="order">
+  <div class="order-container">
+    <div class="order-info">
+      <h2>⚡ طلب سريع</h2>
+      <p>أرفق روشتتك أو اكتب اسم الدواء وهنوصله لبابك في أسرع وقت</p>
+      <div class="order-steps">
+        <div class="step"><span class="step-num">1</span><span>ارفع الروشتة أو اكتب الدواء</span></div>
+        <div class="step"><span class="step-num">2</span><span>حدد عنوانك</span></div>
+        <div class="step"><span class="step-num">3</span><span>استلم طلبك في أسرع وقت</span></div>
+      </div>
+    </div>
+    <div class="order-form" id="orderForm">
+      <h3>أرسل طلبك الآن</h3>
+      <div class="form-group">
+        <input type="text" id="orderName" placeholder="اسمك الكريم" required />
+      </div>
+      <div class="form-group">
+        <input type="tel" id="orderPhone" placeholder="رقم هاتفك" required />
+      </div>
+      <div class="form-group">
+        <input type="text" id="orderAddress" placeholder="عنوانك بالتفصيل" required />
+      </div>
+      <div class="form-group">
+        <textarea id="orderNotes" placeholder="اكتب اسم الدواء أو ملاحظاتك هنا..." rows="3"></textarea>
+      </div>
+      <div class="form-group file-upload" id="fileDropZone">
+        <input type="file" id="prescriptionFile" accept=".jpg,.jpeg,.png,.pdf" hidden />
+        <div class="file-label" onclick="document.getElementById('prescriptionFile').click()">
+          <span>📎</span>
+          <span>ارفع الروشتة هنا أو <u>اضغط للرفع</u></span>
+          <small>JPG, PNG أو PDF – حجم أقصى 5MB</small>
+        </div>
+        <div id="fileName" class="file-name"></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="submitOrderBtn">إرسال الطلب الآن</button>
+    </div>
+  </div>
+</section>
+
+<!-- =================== NEWSLETTER =================== -->
+<section class="newsletter">
+  <h2>ماتفوتكش العروض اللي جاية!</h2>
+  <p>سجل إيميلك وابقى أول واحد تعرف بأحدث العروض والأسعار</p>
+  <div class="newsletter-form">
+    <input type="email" id="newsletterEmail" placeholder="أدخل بريدك الإلكتروني" />
+    <button class="btn btn-primary" id="subscribeBtn">اشترك الآن</button>
+  </div>
+</section>
+
+<!-- =================== CONTACT =================== -->
+<section class="contact-section" id="contact">
+  <div class="section-header">
+    <h2>إحنا هنا عشانك</h2>
+    <p>فريقنا مستعد يساعدك في أي وقت</p>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-card">
+      <span class="contact-icon">🕐</span>
+      <h4>اعمل على مدار 24 ساعة</h4>
+      <p>فريق دعم العملاء يعمل على مدار الساعة طول الأسبوع</p>
+    </div>
+    <div class="contact-card">
+      <span class="contact-icon">📱</span>
+      <h4>01055054047</h4>
+      <p>اتصل بينا في أي وقت</p>
+    </div>
+    <div class="contact-card">
+      <span class="contact-icon">💬</span>
+      <h4>تواصل واتساب</h4>
+      <p>تواصل معنا عبر واتساب للرد السريع</p>
+    </div>
+    <div class="contact-card">
+      <span class="contact-icon">📍</span>
+      <h4>فرع القرن – جوار نوافي</h4>
+      <p>تفضل زورنا في الفرع الرئيسي</p>
+    </div>
+  </div>
+
+  <div class="contact-form-wrapper">
+    <h3>تواصل معنا</h3>
+    <div class="contact-form">
+      <div class="form-row">
+        <input type="text" id="cName" placeholder="الاسم" />
+        <input type="email" id="cEmail" placeholder="البريد الإلكتروني" />
+      </div>
+      <div class="form-row">
+        <input type="tel" id="cPhone" placeholder="الهاتف" />
+        <input type="text" id="cSubject" placeholder="الموضوع" />
+      </div>
+      <textarea id="cMessage" placeholder="رسالتك..." rows="4"></textarea>
+      <button class="btn btn-primary" id="sendContactBtn">إرسال الرسالة</button>
+    </div>
+  </div>
+</section>
+
+<!-- =================== FOOTER =================== -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo"><span class="logo-icon">✚</span><span class="logo-text">PharmaCare</span></div>
+      <p>صيدليتك الإلكترونية الموثوقة لتوصيل الأدوية والمنتجات الصحية لباب بيتك.</p>
+      <div class="social-links">
+        <a href="#">𝕏</a>
+        <a href="#">f</a>
+        <a href="#">in</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>روابط سريعة</h4>
+      <a href="#home">الرئيسية</a>
+      <a href="#products">المنتجات</a>
+      <a href="#offers">العروض</a>
+      <a href="#order">اطلب الآن</a>
+    </div>
+    <div class="footer-col">
+      <h4>الدعم الفني</h4>
+      <a href="#">الأسئلة الشائعة</a>
+      <a href="#">سياسة الخصوصية</a>
+      <a href="#">الشروط والأحكام</a>
+      <a href="#contact">تواصل معنا</a>
+    </div>
+    <div class="footer-col">
+      <h4>شارك التطبيق</h4>
+      <a href="#">App Store</a>
+      <a href="#">Google Play</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 PharmaCare. جميع الحقوق محفوظة</p>
+    <p>Drug Safety | Pharmacy Licensed | Privacy Policy</p>
+  </div>
+</footer>
+
+<!-- =================== CART DRAWER =================== -->
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h3>سلة التسوق</h3>
+    <button id="closeCart">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total">الإجمالي: <strong id="cartTotal">0 ج.م</strong></div>
+    <button class="btn btn-primary btn-block" id="checkoutBtn">إتمام الشراء</button>
+  </div>
+</div>
+
+<!-- =================== AUTH MODAL =================== -->
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal" id="authModal">
+    <button class="modal-close" id="closeAuth">✕</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin">تسجيل الدخول</button>
+      <button class="auth-tab" id="tabRegister">إنشاء حساب</button>
+    </div>
+
+    <!-- Login Form -->
+    <div class="auth-form" id="loginForm">
+      <h2>أهلاً بيك!</h2>
+      <p class="auth-sub">سجل دخولك للمتابعة</p>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="loginEmail" placeholder="example@email.com" />
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <div class="input-eye">
+          <input type="password" id="loginPassword" placeholder="كلمة المرور" />
+          <button class="eye-btn" id="toggleLoginPwd">👁</button>
+        </div>
+      </div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="btn btn-primary btn-block" id="loginBtn">تسجيل الدخول</button>
+      <div class="divider">أو</div>
+      <button class="btn btn-google" id="googleLoginBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" /> تسجيل بجوجل
+      </button>
+      <p class="auth-link">نسيت كلمة المرور؟ <a href="#" id="forgotPwdLink">استعادتها</a></p>
+    </div>
+
+    <!-- Register Form -->
+    <div class="auth-form hidden" id="registerForm">
+      <h2>إنشاء حساب جديد</h2>
+      <p class="auth-sub">انضم لعيلة PharmaCare</p>
+      <div class="form-group">
+        <label>الاسم الكامل</label>
+        <input type="text" id="regName" placeholder="اسمك الكريم" />
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="regEmail" placeholder="example@email.com" />
+      </div>
+      <div class="form-group">
+        <label>رقم الهاتف</label>
+        <input type="tel" id="regPhone" placeholder="01XXXXXXXXX" />
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <div class="input-eye">
+          <input type="password" id="regPassword" placeholder="6 أحرف على الأقل" />
+          <button class="eye-btn" id="toggleRegPwd">👁</button>
+        </div>
+        <div class="password-strength" id="pwdStrength"></div>
+      </div>
+      <div class="form-group">
+        <label>تأكيد كلمة المرور</label>
+        <input type="password" id="regConfirm" placeholder="أعد كتابة كلمة المرور" />
+      </div>
+      <div class="auth-error" id="registerError"></div>
+      <button class="btn btn-primary btn-block" id="registerBtn">إنشاء الحساب</button>
+      <div class="divider">أو</div>
+      <button class="btn btn-google" id="googleRegBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" /> التسجيل بجوجل
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== TOAST =================== -->
+<div class="toast" id="toast"></div>
+
+<!-- =================== PRODUCT MODAL =================== -->
+<div class="modal-overlay" id="productOverlay">
+  <div class="modal product-modal" id="productModal">
+    <button class="modal-close" id="closeProduct">✕</button>
+    <div id="productModalContent"></div>
+  </div>
+</div>
+
+</body>
+</html>
