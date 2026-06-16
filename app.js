@@ -4,28 +4,6 @@
 // ================================================
 
 // ================================================
-//  DEMO PRODUCTS
-// ================================================
-const DEMO_PRODUCTS = [
-  { id:"p1",  name:"فيتامين C 1000mg",            category:"vitamins", price:85,  oldPrice:110, emoji:"💊", desc:"يعزز المناعة ويقاوم الأكسدة – 60 قرص",             badge:"-23%" },
-  { id:"p2",  name:"أوميجا 3 Fish Oil",            category:"vitamins", price:125, oldPrice:180, emoji:"🐟", desc:"أحماض دهنية ضرورية لصحة القلب والمفاصل",            badge:"-31%" },
-  { id:"p3",  name:"فيتامين D3 5000IU",            category:"vitamins", price:65,  emoji:"☀️", desc:"ضروري لامتصاص الكالسيوم وتقوية العظام" },
-  { id:"p4",  name:"كريم SPF 50+ للبشرة",          category:"skincare", price:180, oldPrice:240, emoji:"🧴", desc:"حماية قصوى من الشمس مع ترطيب عميق",                  badge:"-25%" },
-  { id:"p5",  name:"سيروم فيتامين سي للوجه",       category:"skincare", price:340, oldPrice:420, emoji:"✨", desc:"يوحد البشرة ويقلل البقع الداكنة – 30ml",             badge:"-19%" },
-  { id:"p6",  name:"مرطب نهاري SPF20",             category:"skincare", price:220, emoji:"🌸", desc:"ترطيب يومي خفيف مع حماية من الشمس" },
-  { id:"p7",  name:"باناكول أقراص 500mg",          category:"medicine", price:35,  emoji:"💉", desc:"مسكن ألم وخافض حرارة – 24 قرص" },
-  { id:"p8",  name:"برومهيكسين شراب للسعال",       category:"medicine", price:55,  emoji:"🧃", desc:"يذيب المخاط ويسهل التنفس – 120ml" },
-  { id:"p9",  name:"جهاز قياس ضغط الدم",           category:"devices",  price:650, emoji:"🩺", desc:"جهاز ديجيتال دقيق للاستخدام المنزلي" },
-  { id:"p10", name:"ميزان طبي ذكي",                category:"devices",  price:380, emoji:"⚖️", desc:"يقيس الوزن ونسبة الدهون والعضلات" },
-  { id:"p11", name:"معجون أسنان Colgate",           category:"dental",   price:45,  emoji:"🦷", desc:"يحارب البكتيريا ويبيض الأسنان – 100ml" },
-  { id:"p12", name:"غسول فم مضاد للجراثيم",        category:"dental",   price:75,  emoji:"🫧", desc:"يقتل 99.9% من البكتيريا ويرطب الفم" },
-  { id:"p13", name:"شامبو بيبي طبيعي",             category:"baby",     price:95,  emoji:"👶", desc:"لطيف على فروة رأس الرضيع – 200ml" },
-  { id:"p14", name:"كريم حفاض للأطفال",            category:"baby",     price:60,  emoji:"🍼", desc:"يحمي من الطفح الجلدي ويرطب بشرة الطفل" },
-  { id:"p15", name:"كالسيوم + ماغنيسيوم",          category:"vitamins", price:110, oldPrice:140, emoji:"🦴", desc:"يقوي العظام والأسنان – 60 كبسولة",                   badge:"-21%" },
-  { id:"p16", name:"ميزان حرارة رقمي",              category:"devices",  price:120, emoji:"🌡️", desc:"قياس سريع ودقيق في 10 ثوانٍ" },
-];
-
-// ================================================
 //  STATE
 // ================================================
 let allProducts    = [];
@@ -46,19 +24,14 @@ let firebaseReady = false;
 function initFirebase() {
   try {
     const firebaseConfig = {
-      apiKey:            "YOUR_API_KEY",
-      authDomain:        "YOUR_AUTH_DOMAIN",
-      projectId:         "YOUR_PROJECT_ID",
-      storageBucket:     "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MSG_SENDER_ID",
-      appId:             "YOUR_APP_ID"
+       apiKey:            "AIzaSyBBM0PFOBK2tFJ2YliwEGsC1po_5HzcM7I",
+       authDomain:        "al-sabagh.firebaseapp.com",
+       projectId:         "al-sabagh",
+       storageBucket:     "al-sabagh.firebasestorage.app",
+       messagingSenderId: "66677156721",
+       appId:             "1:66677156721:web:30700b98289f904c5424d0",
+       measurementId:     "G-SS0XVJC5XB"
     };
-
-    // Only init if config is real
-    if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-      console.warn("PharmaCare: Firebase config not set – running in demo mode");
-      return false;
-    }
 
     firebase.initializeApp(firebaseConfig);
     auth           = firebase.auth();
@@ -154,21 +127,10 @@ async function loadProducts() {
       const snap = await db.collection("products").get();
       if (!snap.empty) {
         allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } else {
-        // Seed demo data
-        const batch = db.batch();
-        DEMO_PRODUCTS.forEach(p => {
-          batch.set(db.collection("products").doc(p.id), p);
-        });
-        await batch.commit();
-        allProducts = [...DEMO_PRODUCTS];
       }
     } catch (e) {
-      console.warn("Firestore read failed, using demo:", e.message);
-      allProducts = [...DEMO_PRODUCTS];
+      console.warn("Firestore read failed:", e.message);
     }
-  } else {
-    allProducts = [...DEMO_PRODUCTS];
   }
 
   filteredProducts = [...allProducts];
@@ -184,7 +146,7 @@ function updateCategoryCounts() {
 }
 
 // ================================================
-//  RENDER PRODUCTS
+//  RENDER PRODUCTS (تحديث العرض لدعم الصور الحقيقية)
 // ================================================
 function renderProducts() {
   const grid    = $("productsGrid");
@@ -206,9 +168,16 @@ function renderProducts() {
     const card = document.createElement("div");
     card.className = "product-card";
     card.dataset.id = p.id;
+
+    // التحقق هل القيمة المدخلة رابط صورة أم رمز تعبيري
+    const isImage = p.emoji && (p.emoji.startsWith('http://') || p.emoji.startsWith('https://'));
+    const mediaHtml = isImage 
+      ? `<img src="${p.emoji}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='💊'"/>` 
+      : p.emoji || '💊';
+
     card.innerHTML = `
       ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ""}
-      <div class="product-image">${p.emoji || "💊"}</div>
+      <div class="product-image">${mediaHtml}</div>
       <div class="product-info">
         <div class="product-name">${p.name}</div>
         <div class="product-desc">${p.desc || ""}</div>
@@ -323,8 +292,14 @@ function renderCart() {
     total += item.price * item.qty;
     const div = document.createElement("div");
     div.className = "cart-item";
+    
+    const isImage = item.emoji && (item.emoji.startsWith('http://') || item.emoji.startsWith('https://'));
+    const cartMediaHtml = isImage 
+      ? `<img src="${item.emoji}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;" onerror="this.parentNode.innerHTML='💊'"/>` 
+      : item.emoji || "💊";
+
     div.innerHTML = `
-      <div class="cart-item-icon">${item.emoji || "💊"}</div>
+      <div class="cart-item-icon">${cartMediaHtml}</div>
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-price">${item.price} ج.م</div>
@@ -374,40 +349,171 @@ function closeCart() {
   $("cartDrawer").classList.remove("open");
   $("cartOverlay").classList.remove("open");
 }
+// ================================================
+//  CHECKOUT & SAVED ADDRESSES LOGIC (النسخة النظيفة والآمنة) 🚚
+// ================================================
+let userSavedAddresses = []; 
 
-// Checkout
-$("checkoutBtn").addEventListener("click", async () => {
-  if (!currentUser) {
-    showToast("⚠️ سجل دخولك أولاً لإتمام الشراء", "error");
-    closeCart();
-    openAuthModal();
+// 1. تفعيل زرار إتمام الشراء الأساسي بشكل آمن
+if ($("checkoutBtn")) {
+  $("checkoutBtn").addEventListener("click", async () => {
+    if (!currentUser) {
+      showToast("⚠️ سجل دخولك أولاً لإتمام الشراء", "error");
+      closeCart();
+      openAuthModal();
+      return;
+    }
+    if (!cart.length) return;
+
+    if ($("checkoutAddressOverlay")) {
+      $("checkoutAddressOverlay").classList.remove("hidden");
+      loadUserAddresses();
+    } else {
+      alert("خطأ عابر: كود الـ HTML بتاع المودال لسه متضافش في index.html أو الـ ID غلط!");
+    }
+  });
+}
+
+// 2. زرار إغلاق مودال العناوين
+if ($("closeAddressModal")) {
+  $("closeAddressModal").addEventListener("click", () => {
+    if ($("checkoutAddressOverlay")) $("checkoutAddressOverlay").classList.add("hidden");
+  });
+}
+
+// 3. مراقبة تغيير الـ Select
+if ($("addressSelector")) {
+  $("addressSelector").addEventListener("change", function() {
+    if ($("newAddressFields")) {
+      if (this.value === "new") {
+        $("newAddressFields").classList.remove("hidden");
+      } else {
+        $("newAddressFields").classList.add("hidden");
+      }
+    }
+  });
+}
+
+async function loadUserAddresses() {
+  const selector = $("addressSelector");
+  const errorEl = $("addressModalError");
+  if (!selector) return;
+  
+  selector.innerHTML = `<option value="" disabled selected>جاري تحميل عناوينك المحفوظة...</option>`;
+  if (errorEl) errorEl.textContent = "";
+
+  if (!firebaseReady) {
+    selector.innerHTML = `<option value="new">➕ إضافة عنوان جديد (وضع تجريبي)</option>`;
+    if ($("newAddressFields")) $("newAddressFields").classList.remove("hidden");
     return;
   }
-  if (!cart.length) return;
+
   try {
-    if (firebaseReady) {
-      await fsAdd("orders", {
-        userId:    currentUser.uid,
-        userEmail: currentUser.email,
-        items:     cart,
-        total:     cart.reduce((s, i) => s + i.price * i.qty, 0),
-        status:    "pending"
+    const userDoc = await db.collection("users").doc(currentUser.uid).get();
+    let optionsHtml = '';
+    userSavedAddresses = [];
+
+    if (userDoc.exists && userDoc.data().addresses && userDoc.data().addresses.length > 0) {
+      userSavedAddresses = userDoc.data().addresses;
+      userSavedAddresses.forEach((addr, index) => {
+        optionsHtml += `<option value="${index}">📍 ${addr.addressDetail.substring(0, 30)}... (${addr.name})</option>`;
       });
+      optionsHtml += `<option value="new">➕ إضافة عنوان جديد</option>`;
+      selector.innerHTML = optionsHtml;
+      if ($("newAddressFields")) $("newAddressFields").classList.add("hidden");
+    } else {
+      selector.innerHTML = `<option value="new">➕ إضافة عنوان جديد</option>`;
+      if ($("newAddressFields")) $("newAddressFields").classList.remove("hidden");
     }
-    cart = [];
-    saveCart(); updateCartCount(); renderCart(); closeCart();
-    showToast("🎉 تم إرسال طلبك بنجاح! سنتواصل معك قريباً");
   } catch (e) {
-    showToast("حدث خطأ، حاول مرة أخرى", "error");
+    selector.innerHTML = `<option value="new">➕ إضافة عنوان جديد</option>`;
+    if ($("newAddressFields")) $("newAddressFields").classList.remove("hidden");
   }
-});
+}
+
+// 5. زرار التأكيد النهائي وإرسال الأوردر للمسؤولين
+if ($("confirmOrderBtn")) {
+  $("confirmOrderBtn").addEventListener("click", async () => {
+    const selectValue = $("addressSelector") ? $("addressSelector").value : "new";
+    const errorEl = $("addressModalError");
+    if (errorEl) errorEl.textContent = "";
+
+    let finalShippingData = null;
+
+    if (selectValue === "new" || selectValue === "") {
+      const name = $("shipName") ? $("shipName").value.trim() : "";
+      const phone = $("shipPhone") ? $("shipPhone").value.trim() : "";
+      const addressDetail = $("shipAddress") ? $("shipAddress").value.trim() : "";
+
+      if (!name || !phone || !addressDetail) {
+        if (errorEl) errorEl.textContent = "⚠️ من فضلك املا كل الحقول المطلوبة للعنوان الجديد";
+        return;
+      }
+      if (phone.length < 11) {
+        if (errorEl) errorEl.textContent = "⚠️ رقم الهاتف يجب أن يكون 11 رقم على الأقل";
+        return;
+      }
+
+      finalShippingData = { name, phone, addressDetail };
+
+      if ($("saveAddressCheck") && $("saveAddressCheck").checked && firebaseReady) {
+        try {
+          await db.collection("users").doc(currentUser.uid).update({
+            addresses: firebase.firestore.FieldValue.arrayUnion(finalShippingData)
+          });
+        } catch (err) {
+          console.warn("فشل حفظ العنوان:", err.message);
+        }
+      }
+    } else {
+      finalShippingData = userSavedAddresses[parseInt(selectValue)];
+    }
+
+    try {
+      $("confirmOrderBtn").disabled = true;
+      $("confirmOrderBtn").textContent = "جاري تأكيد طلبك...";
+
+      if (firebaseReady) {
+        await db.collection("orders").add({
+          userId:       currentUser.uid,
+          userEmail:    currentUser.email,
+          shippingInfo: finalShippingData, 
+          items:        cart,
+          total:        cart.reduce((s, i) => s + i.price * i.qty, 0),
+          status:       "pending",
+          createdAt:    firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      cart = [];
+      saveCart(); updateCartCount(); renderCart(); closeCart();
+      if ($("checkoutAddressOverlay")) $("checkoutAddressOverlay").classList.add("hidden");
+      
+      ['shipName', 'shipPhone', 'shipAddress'].forEach(id => {
+        if ($(id)) $(id).value = "";
+      });
+      
+      showToast("🎉 تم إرسال طلبك بنجاح! سنتواصل معك قريباً");
+    } catch (e) {
+      showToast("حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى", "error");
+    } finally {
+      $("confirmOrderBtn").disabled = false;
+      $("confirmOrderBtn").textContent = "تأكيد وإرسال الطلب الآن 🎉";
+    }
+  });
+}
 
 // ================================================
-//  PRODUCT MODAL
+//  PRODUCT MODAL (تحديث العرض المنبثق ليدعم الصور)
 // ================================================
 function openProductModal(p) {
+  const isImage = p.emoji && (p.emoji.startsWith('http://') || p.emoji.startsWith('https://'));
+  const modalMediaHtml = isImage 
+    ? `<img src="${p.emoji}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;" onerror="this.parentNode.innerHTML='💊'"/>` 
+    : p.emoji || '💊';
+
   $("productModalContent").innerHTML = `
-    <div class="product-modal-img">${p.emoji || "💊"}</div>
+    <div class="product-modal-img">${modalMediaHtml}</div>
     <h2>${p.name}</h2>
     <p class="product-desc">${p.desc || ""}</p>
     <div class="product-price">${p.price} ج.م
@@ -666,9 +772,131 @@ function getAuthError(code) {
 }
 
 // ================================================
-//  INIT
+//  INIT & DOM READY (ضع هذا البلوك في آخر ملف app.js)
 // ================================================
 document.addEventListener("DOMContentLoaded", () => {
+  
+  // 1. زرار لوحة التحكم للمسؤولين
+  const dashBtn = document.getElementById("goToDashBtn");
+  if (dashBtn) {
+    dashBtn.addEventListener("click", () => {
+      window.location.href = "dashboard.html";
+    });
+  }
+
+  // 2. زرار إتمام الشراء الأساسي جوه السلة
+  if ($("checkoutBtn")) {
+    $("checkoutBtn").addEventListener("click", async () => {
+      if (!currentUser) {
+        showToast("⚠️ سجل دخولك أولاً لإتمام الشراء", "error");
+        closeCart();
+        openAuthModal();
+        return;
+      }
+      if (!cart.length) return;
+
+      if ($("checkoutAddressOverlay")) {
+        $("checkoutAddressOverlay").classList.remove("hidden");
+        loadUserAddresses(); // استدعاء دالة جلب العناوين
+      } else {
+        alert("⚠️ تنبيه للمطور: كود الـ HTML الخاص بمودال الشحن لسه مش موجود جوه index.html أو الـ ID مكتوب غلط!");
+      }
+    });
+  }
+
+  // 3. زرار إغلاق مودال العناوين
+  if ($("closeAddressModal")) {
+    $("closeAddressModal").addEventListener("click", () => {
+      if ($("checkoutAddressOverlay")) $("checkoutAddressOverlay").classList.add("hidden");
+    });
+  }
+
+  // 4. مراقبة تغيير الـ Select (عنوان قديم أم جديد)
+  if ($("addressSelector")) {
+    $("addressSelector").addEventListener("change", function() {
+      if ($("newAddressFields")) {
+        if (this.value === "new") {
+          $("newAddressFields").classList.remove("hidden");
+        } else {
+          $("newAddressFields").classList.add("hidden");
+        }
+      }
+    });
+  }
+
+  // 5. زرار التأكيد النهائي وإرسال الأوردر للـ Firebase
+  if ($("confirmOrderBtn")) {
+    $("confirmOrderBtn").addEventListener("click", async () => {
+      const selectValue = $("addressSelector") ? $("addressSelector").value : "new";
+      const errorEl = $("addressModalError");
+      if (errorEl) errorEl.textContent = "";
+
+      let finalShippingData = null;
+
+      if (selectValue === "new" || selectValue === "") {
+        const name = $("shipName") ? $("shipName").value.trim() : "";
+        const phone = $("shipPhone") ? $("shipPhone").value.trim() : "";
+        const addressDetail = $("shipAddress") ? $("shipAddress").value.trim() : "";
+
+        if (!name || !phone || !addressDetail) {
+          if (errorEl) errorEl.textContent = "⚠️ من فضلك املا كل الحقول المطلوبة للعنوان الجديد";
+          return;
+        }
+        if (phone.length < 11) {
+          if (errorEl) errorEl.textContent = "⚠️ رقم الهاتف يجب أن يكون 11 رقم على الأقل";
+          return;
+        }
+
+        finalShippingData = { name, phone, addressDetail };
+
+        if ($("saveAddressCheck") && $("saveAddressCheck").checked && firebaseReady) {
+          try {
+            await db.collection("users").doc(currentUser.uid).update({
+              addresses: firebase.firestore.FieldValue.arrayUnion(finalShippingData)
+            });
+          } catch (err) {
+            console.warn("فشل حفظ العنوان:", err.message);
+          }
+        }
+      } else {
+        finalShippingData = userSavedAddresses[parseInt(selectValue)];
+      }
+
+      try {
+        $("confirmOrderBtn").disabled = true;
+        $("confirmOrderBtn").textContent = "جاري تأكيد طلبك...";
+
+        if (firebaseReady) {
+          await db.collection("orders").add({
+            userId:       currentUser.uid,
+            userEmail:    currentUser.email,
+            shippingInfo: finalShippingData, 
+            items:        cart,
+            total:        cart.reduce((s, i) => s + i.price * i.qty, 0),
+            status:       "pending",
+            createdAt:    firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
+        cart = [];
+        saveCart(); updateCartCount(); renderCart(); closeCart();
+        if ($("checkoutAddressOverlay")) $("checkoutAddressOverlay").classList.add("hidden");
+        
+        ['shipName', 'shipPhone', 'shipAddress'].forEach(id => {
+          if ($(id)) $(id).value = "";
+        });
+        
+        showToast("🎉 تم إرسال طلبك بنجاح! سنتواصل معك قريباً");
+      } catch (e) {
+        showToast("حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى", "error");
+      } finally {
+        $("confirmOrderBtn").disabled = false;
+        $("confirmOrderBtn").textContent = "تأكيد وإرسال الطلب الآن 🎉";
+      }
+    });
+  }
+
+  // تشغيل الدوال الأساسية المعتادة بالسستم
   initFirebase();
   updateCartCount();
   loadProducts();

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PharmaCare – لوحة التحكم</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+</head>
+<body>
+
+<!-- ===================== LOGIN GATE ===================== -->
+<div id="loginGate" class="login-gate">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="logo-cross">✚</span>
+      <span>PharmaCare</span>
+    </div>
+    <h2>لوحة التحكم</h2>
+    <p class="login-sub">سجل دخولك كمسؤول للمتابعة</p>
+    <div class="form-group">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="adminEmail" placeholder="admin@pharmcare.com" />
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <div class="input-eye">
+        <input type="password" id="adminPassword" placeholder="••••••••" />
+        <button class="eye-btn" id="toggleAdminPwd">👁</button>
+      </div>
+    </div>
+    <div class="auth-error" id="loginGateError"></div>
+    <button class="btn btn-primary btn-block" id="adminLoginBtn">دخول</button>
+    <p class="login-hint">⚠️ هذه الصفحة للمسؤولين فقط</p>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div id="dashboardApp" class="dashboard hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-cross">✚</span>
+      <span>PharmaCare</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="overview">
+        <span class="nav-icon">📊</span>
+        <span>الرئيسية</span>
+      </a>
+      <a href="#" class="nav-item" data-page="products">
+        <span class="nav-icon">💊</span>
+        <span>المنتجات</span>
+      </a>
+      <a href="#" class="nav-item" data-page="orders">
+        <span class="nav-icon">🛒</span>
+        <span>الطلبات</span>
+        <span class="nav-badge" id="pendingBadge">0</span>
+      </a>
+      <a href="#" class="nav-item" data-page="prescriptions">
+        <span class="nav-icon">📋</span>
+        <span>طلبات الروشتة</span>
+      </a>
+      <a href="#" class="nav-item" data-page="messages">
+        <span class="nav-icon">💬</span>
+        <span>الرسائل</span>
+      </a>
+      <a href="#" class="nav-item" data-page="newsletter">
+        <span class="nav-icon">📧</span>
+        <span>المشتركين</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="index.html" class="nav-item" target="_blank">
+        <span class="nav-icon">🌐</span>
+        <span>الموقع</span>
+      </a>
+      <button class="nav-item logout-btn" id="logoutBtn">
+        <span class="nav-icon">🚪</span>
+        <span>خروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-right">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div>
+          <h1 class="page-title" id="pageTitle">الرئيسية</h1>
+          <p class="page-sub" id="pageSub">مرحباً، إليك ملخص اليوم</p>
+        </div>
+      </div>
+      <div class="topbar-left">
+        <div class="admin-info" id="adminInfo">
+          <div class="admin-avatar">👤</div>
+          <span id="adminName">المسؤول</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== PAGE: OVERVIEW ===== -->
+    <div class="page active" id="page-overview">
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card teal">
+          <div class="stat-icon">💊</div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-products">—</span>
+            <span class="stat-label">إجمالي المنتجات</span>
+          </div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">🛒</div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-orders">—</span>
+            <span class="stat-label">إجمالي الطلبات</span>
+          </div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-pending">—</span>
+            <span class="stat-label">طلبات قيد الانتظار</span>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">💰</div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-revenue">—</span>
+            <span class="stat-label">إجمالي الإيرادات</span>
+          </div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">📋</div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-prescriptions">—</span>
+            <span class="stat-label">طلبات الروشتة</span>
+          </div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">💬</div>
+          <div class="stat-info">
+            <span class="stat-num" id="stat-messages">—</span>
+            <span class="stat-label">رسائل التواصل</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="card">
+        <div class="card-header">
+          <h3>آخر الطلبات</h3>
+          <button class="btn btn-sm" onclick="switchPage('orders')">عرض الكل</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="recentOrdersTable">
+            <thead>
+              <tr>
+                <th>رقم الطلب</th>
+                <th>العميل</th>
+                <th>المبلغ</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrdersBody">
+              <tr><td colspan="5" class="loading-cell">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: PRODUCTS ===== -->
+    <div class="page hidden" id="page-products">
+      <div class="page-actions">
+        <div class="search-row">
+          <input type="text" id="productSearch" class="search-input" placeholder="ابحث عن منتج..." />
+          <select id="productCatFilter" class="select-input">
+            <option value="all">كل الفئات</option>
+            <option value="vitamins">فيتامينات</option>
+            <option value="skincare">العناية بالبشرة</option>
+            <option value="medicine">أدوية</option>
+            <option value="baby">منتجات الأطفال</option>
+            <option value="dental">العناية بالأسنان</option>
+            <option value="devices">أجهزة طبية</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="addProductBtn">+ إضافة منتج</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table" id="productsTable">
+            <thead>
+              <tr>
+                <th>الرمز</th>
+                <th>اسم المنتج</th>
+                <th>الفئة</th>
+                <th>السعر</th>
+                <th>السعر القديم</th>
+                <th>الخصم</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <tr><td colspan="7" class="loading-cell">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: ORDERS ===== -->
+    <div class="page hidden" id="page-orders">
+      <div class="page-actions">
+        <div class="search-row">
+          <input type="text" id="orderSearch" class="search-input" placeholder="بحث باسم أو بريد العميل..." />
+          <select id="orderStatusFilter" class="select-input">
+            <option value="all">كل الحالات</option>
+            <option value="pending">قيد الانتظار</option>
+            <option value="processing">جاري التجهيز</option>
+            <option value="shipped">تم الشحن</option>
+            <option value="delivered">تم التوصيل</option>
+            <option value="cancelled">ملغي</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table" id="ordersTable">
+            <thead>
+              <tr>
+                <th>رقم الطلب</th>
+                <th>العميل</th>
+                <th>المنتجات</th>
+                <th>المبلغ</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr><td colspan="7" class="loading-cell">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: PRESCRIPTIONS ===== -->
+    <div class="page hidden" id="page-prescriptions">
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>الهاتف</th>
+                <th>العنوان</th>
+                <th>الملاحظات</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="prescriptionsBody">
+              <tr><td colspan="7" class="loading-cell">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: MESSAGES ===== -->
+    <div class="page hidden" id="page-messages">
+      <div class="messages-grid" id="messagesGrid">
+        <div class="loading-cell">جاري التحميل...</div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: NEWSLETTER ===== -->
+    <div class="page hidden" id="page-newsletter">
+      <div class="page-actions">
+        <span id="subCount" class="sub-count">0 مشترك</span>
+        <button class="btn btn-sm" id="exportEmailsBtn">📥 تصدير CSV</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>البريد الإلكتروني</th><th>تاريخ الاشتراك</th></tr></thead>
+            <tbody id="newsletterBody">
+              <tr><td colspan="3" class="loading-cell">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content -->
+</div><!-- end dashboardApp -->
+
+<!-- ============ PRODUCT MODAL ============ -->
+<div class="modal-overlay hidden" id="productModalOverlay">
+  <div class="modal" id="productFormModal">
+    <div class="modal-header">
+      <h3 id="productModalTitle">إضافة منتج جديد</h3>
+      <button class="modal-close" id="closeProductModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editProductId" />
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>اسم المنتج *</label>
+          <input type="text" id="pName" placeholder="مثال: فيتامين C 1000mg" />
+        </div>
+        <div class="form-group">
+          <label>الفئة *</label>
+          <select id="pCategory">
+            <option value="">اختر الفئة</option>
+            <option value="vitamins">فيتامينات ومكملات</option>
+            <option value="skincare">العناية بالبشرة</option>
+            <option value="medicine">أدوية ومستلزمات</option>
+            <option value="baby">منتجات الأطفال</option>
+            <option value="dental">العناية بالأسنان</option>
+            <option value="devices">أجهزة طبية</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>رابط صورة المنتج (Image URL)</label>
+          <input type="text" id="pEmoji" placeholder="https://example.com/image.png" />
+        </div>
+        <div class="form-group">
+          <label>السعر الحالي (ج.م) *</label>
+          <input type="number" id="pPrice" placeholder="85" min="0" />
+        </div>
+        <div class="form-group">
+          <label>السعر القديم (ج.م)</label>
+          <input type="number" id="pOldPrice" placeholder="110" min="0" />
+        </div>
+        <div class="form-group">
+          <label>شارة الخصم</label>
+          <input type="text" id="pBadge" placeholder="مثال: -20%" />
+        </div>
+        <div class="form-group full">
+          <label>وصف المنتج</label>
+          <textarea id="pDesc" rows="3" placeholder="وصف مختصر للمنتج..."></textarea>
+        </div>
+      </div>
+      <div class="auth-error" id="productFormError"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cancelProductModal">إلغاء</button>
+      <button class="btn btn-primary" id="saveProductBtn">💾 حفظ المنتج</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ORDER DETAIL MODAL ============ -->
+<div class="modal-overlay hidden" id="orderDetailOverlay">
+  <div class="modal" id="orderDetailModal">
+    <div class="modal-header">
+      <h3>تفاصيل الطلب</h3>
+      <button class="modal-close" id="closeOrderDetail">✕</button>
+    </div>
+    <div class="modal-body" id="orderDetailContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="closeOrderDetailBtn">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-overlay hidden" id="confirmOverlay">
+  <div class="modal confirm-modal" id="confirmModal">
+    <div class="confirm-icon">🗑</div>
+    <h3 id="confirmTitle">هل أنت متأكد؟</h3>
+    <p id="confirmMsg">سيتم حذف هذا العنصر نهائياً</p>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="confirmCancel">إلغاء</button>
+      <button class="btn btn-danger" id="confirmOk">حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

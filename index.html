@@ -289,6 +289,7 @@
       <a href="#products">المنتجات</a>
       <a href="#offers">العروض</a>
       <a href="#order">اطلب الآن</a>
+      <a href="dashboard.html" target="_blank">لوحة التحكم (للمسؤولين)</a>
     </div>
     <div class="footer-col">
       <h4>الدعم الفني</h4>
@@ -402,6 +403,48 @@
   <div class="modal product-modal" id="productModal">
     <button class="modal-close" id="closeProduct">✕</button>
     <div id="productModalContent"></div>
+  </div>
+</div>
+
+<!-- =================== CHECKOUT ADDRESS MODAL =================== -->
+<div class="modal-overlay hidden" id="checkoutAddressOverlay">
+  <div class="modal" style="max-width: 480px;">
+    <button class="modal-close" id="closeAddressModal">✕</button>
+    <div class="auth-form" style="padding: 10px 5px;">
+      <h2>شحن الطلب 🚚</h2>
+      <p class="auth-sub">اختر عنوان التوصيل لإتمام عملية الشراء</p>
+
+      <!-- قائمة اختيار العناوين المحفوظة -->
+      <div class="form-group">
+        <label>عنوان التوصيل</label>
+        <select id="addressSelector" style="width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--white); border-radius:var(--radius-sm);">
+          <!-- سيتم ملء العناوين هنا بالـ JS -->
+        </select>
+      </div>
+
+      <!-- حقول إدخال عنوان جديد (تظهر وتختفي ديناميكياً) -->
+      <div id="newAddressFields" class="hidden" style="margin-top: 16px; display: flex; flex-direction: column; gap: 14px;">
+        <div class="form-group">
+          <label>الاسم الكامل للمستلم *</label>
+          <input type="text" id="shipName" placeholder="اسم الشخص المستلم" />
+        </div>
+        <div class="form-group">
+          <label>رقم الموبايل *</label>
+          <input type="tel" id="shipPhone" placeholder="01XXXXXXXXX" />
+        </div>
+        <div class="form-group">
+          <label>العنوان بالتفصيل *</label>
+          <textarea id="shipAddress" placeholder="المحافظة، المدينة، اسم الشارع، رقم العمارة والشقة" rows="3" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--white); border-radius:var(--radius-sm); padding:10px; font-family:'Cairo';"></textarea>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <input type="checkbox" id="saveAddressCheck" checked style="width: auto; cursor: pointer;" />
+          <label for="saveAddressCheck" style="cursor: pointer; font-size: 13px; color: var(--text-muted);">حفظ هذا العنوان لاستخدامه لاحقاً</label>
+        </div>
+      </div>
+
+      <div class="auth-error" id="addressModalError" style="margin-top: 10px;"></div>
+      <button class="btn btn-primary btn-block" id="confirmOrderBtn" style="margin-top: 16px;">تأكيد وإرسال الطلب الآن 🎉</button>
+    </div>
   </div>
 </div>
 
