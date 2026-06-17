@@ -3,29 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PharmaCare – لوحة التحكم</title>
+  <title>الصباغ – لوحة التحكم</title>
   <link rel="stylesheet" href="dashboard.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <!-- Firebase Compat SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<!-- ===================== LOGIN GATE ===================== -->
 <div id="loginGate" class="login-gate">
   <div class="login-box">
     <div class="login-logo">
       <span class="logo-cross">✚</span>
-      <span>PharmaCare</span>
+      <span>الصباغ</span>
     </div>
     <h2>لوحة التحكم</h2>
     <p class="login-sub">سجل دخولك كمسؤول للمتابعة</p>
     <div class="form-group">
       <label>البريد الإلكتروني</label>
-      <input type="email" id="adminEmail" placeholder="admin@pharmcare.com" />
+      <input type="email" id="adminEmail" placeholder="admin@pharmacare.com" />
     </div>
     <div class="form-group">
       <label>كلمة المرور</label>
@@ -40,14 +39,12 @@
   </div>
 </div>
 
-<!-- ===================== DASHBOARD ===================== -->
 <div id="dashboardApp" class="dashboard hidden">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <span class="logo-cross">✚</span>
-      <span>PharmaCare</span>
+      <span>الصباغ</span>
     </div>
 
     <nav class="sidebar-nav">
@@ -76,6 +73,10 @@
         <span class="nav-icon">📧</span>
         <span>المشتركين</span>
       </a>
+      <a href="#" class="nav-item" data-page="offers">
+        <span class="nav-icon">🔥</span>
+        <span>العروض</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -90,10 +91,8 @@
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
   <div class="main-content">
 
-    <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-right">
         <button class="menu-toggle" id="menuToggle">☰</button>
@@ -110,9 +109,7 @@
       </div>
     </header>
 
-    <!-- ===== PAGE: OVERVIEW ===== -->
     <div class="page active" id="page-overview">
-      <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card teal">
           <div class="stat-icon">💊</div>
@@ -158,7 +155,6 @@
         </div>
       </div>
 
-      <!-- Recent Orders -->
       <div class="card">
         <div class="card-header">
           <h3>آخر الطلبات</h3>
@@ -183,7 +179,6 @@
       </div>
     </div>
 
-    <!-- ===== PAGE: PRODUCTS ===== -->
     <div class="page hidden" id="page-products">
       <div class="page-actions">
         <div class="search-row">
@@ -198,7 +193,11 @@
             <option value="devices">أجهزة طبية</option>
           </select>
         </div>
-        <button class="btn btn-primary" id="addProductBtn">+ إضافة منتج</button>
+        <div style="display: flex; gap: 10px;">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" />
+            <button class="btn btn-outline" onclick="document.getElementById('excelFileInput').click()">📥 رفع من إكسيل (Bulk Upload)</button>
+            <button class="btn btn-primary" id="addProductBtn">+ إضافة منتج</button>
+        </div>
       </div>
 
       <div class="card">
@@ -223,7 +222,6 @@
       </div>
     </div>
 
-    <!-- ===== PAGE: ORDERS ===== -->
     <div class="page hidden" id="page-orders">
       <div class="page-actions">
         <div class="search-row">
@@ -261,7 +259,6 @@
       </div>
     </div>
 
-    <!-- ===== PAGE: PRESCRIPTIONS ===== -->
     <div class="page hidden" id="page-prescriptions">
       <div class="card">
         <div class="table-wrap">
@@ -285,14 +282,12 @@
       </div>
     </div>
 
-    <!-- ===== PAGE: MESSAGES ===== -->
     <div class="page hidden" id="page-messages">
       <div class="messages-grid" id="messagesGrid">
         <div class="loading-cell">جاري التحميل...</div>
       </div>
     </div>
 
-    <!-- ===== PAGE: NEWSLETTER ===== -->
     <div class="page hidden" id="page-newsletter">
       <div class="page-actions">
         <span id="subCount" class="sub-count">0 مشترك</span>
@@ -310,11 +305,39 @@
       </div>
     </div>
 
-  </div><!-- end main-content -->
-</div><!-- end dashboardApp -->
+    <div class="page hidden" id="page-offers">
+      <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <div class="card-header">
+          <h3>إدارة بنر العروض السريعة (Flash Offer)</h3>
+        </div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="form-group">
+            <label>شارة البنر الفرعية (Label)</label>
+            <input type="text" id="offerLabel" placeholder="مثال: 🔥 عرض حصري لفترة محدودة" />
+          </div>
+          <div class="form-group">
+            <label>عنوان العرض الرئيسي (Title) *</label>
+            <textarea id="offerTitle" rows="2" placeholder="مثال: خصم 20% على كل منتجات العناية بالبشرة"></textarea>
+          </div>
+          <div class="form-group">
+            <label>كود الخصم (Promo Code)</label>
+            <input type="text" id="offerCode" placeholder="مثال: SUN20" />
+          </div>
+          <div class="form-group">
+            <label>مدة العرض بالساعات وتشغيل العداد</label>
+            <input type="number" id="offerHours" placeholder="6" min="1" />
+          </div>
+          <div class="auth-error" id="offerFormError"></div>
+          <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="saveOfferBtn" style="flex: 1; min-width: 150px;">💾 حفظ وتحديث العرض فوراً</button>
+            <button class="btn btn-outline" id="clearOfferFieldsBtn" style="min-width: 140px;">✨ تجهيز عرض جديد</button>
+            <button class="btn btn-danger" id="deleteOfferBtn" style="min-width: 160px;">🗑️ حذف العرض من الموقع</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<!-- ============ PRODUCT MODAL ============ -->
-<div class="modal-overlay hidden" id="productModalOverlay">
+  </div></div><div class="modal-overlay hidden" id="productModalOverlay">
   <div class="modal" id="productFormModal">
     <div class="modal-header">
       <h3 id="productModalTitle">إضافة منتج جديد</h3>
@@ -340,8 +363,8 @@
           </select>
         </div>
         <div class="form-group">
-          <label>رابط صورة المنتج (Image URL)</label>
-          <input type="text" id="pEmoji" placeholder="https://example.com/image.png" />
+          <label>الرمز التعبيري (Emoji) أو رابط الصورة</label>
+          <input type="text" id="pEmoji" placeholder="💊 أو رابط الصورة مباشر" />
         </div>
         <div class="form-group">
           <label>السعر الحالي (ج.م) *</label>
@@ -369,7 +392,6 @@
   </div>
 </div>
 
-<!-- ============ ORDER DETAIL MODAL ============ -->
 <div class="modal-overlay hidden" id="orderDetailOverlay">
   <div class="modal" id="orderDetailModal">
     <div class="modal-header">
@@ -383,7 +405,6 @@
   </div>
 </div>
 
-<!-- ============ CONFIRM MODAL ============ -->
 <div class="modal-overlay hidden" id="confirmOverlay">
   <div class="modal confirm-modal" id="confirmModal">
     <div class="confirm-icon">🗑</div>
@@ -395,10 +416,20 @@
     </div>
   </div>
 </div>
-
-<!-- ============ TOAST ============ -->
 <div class="toast" id="toast"></div>
-
 <script src="dashboard.js"></script>
+<div class="modal-overlay hidden" id="userDetailOverlay">
+  <div class="modal" id="userDetailModal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3>📋 ملف بيانات العميل الكاملة</h3>
+      <button class="modal-close" id="closeUserDetail">✕</button>
+    </div>
+    <div class="modal-body" id="userDetailContent">
+      </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="closeUserDetailBtn" style="width: 100%;">إغلاق النافذة</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PharmaCare – صيدليتك الإلكترونية الموثوقة</title>
+  <title>صيدلية الصباغ</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <!-- Firebase Compat SDK (works without bundler / file://) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -62,8 +63,7 @@
       <div class="hero-card-items">
         <div class="card-item"><span class="dot teal"></span>فيتامين C 1000mg</div>
         <div class="card-item"><span class="dot teal"></span>أوميجا 3</div>
-        <div class="card-item"><span class="dot yellow"></span>كريم SPF 50</div>
-        <div class="card-item"><span class="dot teal"></span>باناكول أقراص</div>
+        <div class="card-item"><span class="dot teal"></span>بنادول اقراص</div>
       </div>
       <div class="hero-card-footer">
         <span class="badge-pill">توصيل خلال 2 ساعة</span>
@@ -76,7 +76,6 @@
 <div class="trust-bar">
   <div class="trust-item"><span>✅</span> أدوية أصلية 100%</div>
   <div class="trust-item"><span>🚚</span> توصيل سريع لبابك</div>
-  <div class="trust-item"><span>🔒</span> دفع آمن ومضمون</div>
   <div class="trust-item"><span>📞</span> دعم 24 ساعة</div>
 </div>
 
@@ -142,8 +141,7 @@
 <!-- =================== PRODUCTS =================== -->
 <section class="products-section" id="products">
   <div class="section-header">
-    <h2>⚡ عروض فلاش سريعة</h2>
-    <p>أفضل المنتجات بأحسن الأسعار</p>
+    <p>  المنتجات </p>
   </div>
 
   <!-- Filter Bar -->
@@ -234,7 +232,7 @@
   <div class="contact-grid">
     <div class="contact-card">
       <span class="contact-icon">🕐</span>
-      <h4>اعمل على مدار 24 ساعة</h4>
+      <h4>نعمل على مدار 24 ساعة</h4>
       <p>فريق دعم العملاء يعمل على مدار الساعة طول الأسبوع</p>
     </div>
     <div class="contact-card">
@@ -242,7 +240,7 @@
       <h4>01055054047</h4>
       <p>اتصل بينا في أي وقت</p>
     </div>
-    <div class="contact-card">
+    <div class="contact-card" onclick="window.open('https://wa.me/201055054047', '_blank')" style="cursor: pointer;">
       <span class="contact-icon">💬</span>
       <h4>تواصل واتساب</h4>
       <p>تواصل معنا عبر واتساب للرد السريع</p>
@@ -278,8 +276,7 @@
       <div class="nav-logo"><span class="logo-icon">✚</span><span class="logo-text">صيدلية الصباغ</span></div>
       <p>صيدليتك الإلكترونية الموثوقة لتوصيل الأدوية والمنتجات الصحية لباب بيتك.</p>
       <div class="social-links">
-        <a href="#">𝕏</a>
-        <a href="#">f</a>
+        <a href="https://www.facebook.com/sydlyh.alsbagh.balqryn.almdabhh?locale=ar_AR">f</a>
         <a href="#">in</a>
       </div>
     </div>
@@ -298,14 +295,9 @@
       <a href="#">الشروط والأحكام</a>
       <a href="#contact">تواصل معنا</a>
     </div>
-    <div class="footer-col">
-      <h4>شارك التطبيق</h4>
-      <a href="#">App Store</a>
-      <a href="#">Google Play</a>
-    </div>
   </div>
   <div class="footer-bottom">
-    <p>© 2024 PharmaCare. جميع الحقوق محفوظة</p>
+    <p>© 2024 AlSabagh. جميع الحقوق محفوظة</p>
     <p>Drug Safety | Pharmacy Licensed | Privacy Policy</p>
   </div>
 </footer>
@@ -360,7 +352,7 @@
     <!-- Register Form -->
     <div class="auth-form hidden" id="registerForm">
       <h2>إنشاء حساب جديد</h2>
-      <p class="auth-sub">انضم لعيلة PharmaCare</p>
+      <p class="auth-sub">انضم لعيلة الصباغ</p>
       <div class="form-group">
         <label>الاسم الكامل</label>
         <input type="text" id="regName" placeholder="اسمك الكريم" />
