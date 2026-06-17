@@ -170,16 +170,17 @@ function loadDashboardData() {
     document.getElementById('stat-pending').textContent = pendingCount;
     document.getElementById('pendingBadge').textContent = pendingCount;
     
-    // حساب إجمالي الإيرادات من الطلبات الموصلة (delivered)
+   // حساب إجمالي الإيرادات من الطلبات المؤكدة حالياً أو الموصلة سابقاً 💰
     let revenue = 0;
     snap.docs.forEach(doc => {
-      if(doc.data().status === 'delivered') revenue += (doc.data().total || 0);
+      const s = doc.data().status;
+      if(s === 'confirmed' || s === 'delivered' || s === 'processing' || s === 'shipped') {
+        revenue += (doc.data().total || 0);
+      }
     });
     document.getElementById('stat-revenue').textContent = revenue + " ج.م";
 
-    filterOrdersTable();
   });
-
   // 3. طلبات الروشتة
   db.collection("prescriptionOrders").onSnapshot(snap => {
     document.getElementById('stat-prescriptions').textContent = snap.size;
@@ -254,11 +255,9 @@ function renderOrdersTable(docs) {
         <td>${date}</td>
         <td>
           <select class="status-select" onchange="updateOrderStatus('${doc.id}', this.value)">
-            <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
-            <option value="processing" ${data.status === 'processing' ? 'selected' : ''}>جاري التجهيز</option>
-            <option value="shipped" ${data.status === 'shipped' ? 'selected' : ''}>تم الشحن</option>
-            <option value="delivered" ${data.status === 'delivered' ? 'selected' : ''}>تم التوصيل</option>
-            <option value="cancelled" ${data.status === 'cancelled' ? 'selected' : ''}>ملغي</option>
+          <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>غير مؤكد</option>
+          <option value="confirmed" ${data.status === 'confirmed' || data.status === 'processing' || data.status === 'delivered' || data.status === 'shipped' ? 'selected' : ''}>مؤكد</option>
+          <option value="cancelled" ${data.status === 'cancelled' ? 'selected' : ''}>ملغي</option>
           </select>
         </td>
       </tr>`;
@@ -272,8 +271,15 @@ function renderOrdersTable(docs) {
 }
 
 function getStatusLabel(status) {
-  const map = { pending: 'قيد الانتظار', processing: 'جاري التجهيز', shipped: 'تم الشحن', delivered: 'تم التوصيل', cancelled: 'ملغي' };
-  return map[status] || 'قيد الانتظار';
+  const map = { 
+    pending: 'غير مؤكد', 
+    confirmed: 'مؤكد', 
+    processing: 'مؤكد', // حماية للطلبات القديمة بالداتابيز
+    shipped: 'مؤكد',    // حماية للطلبات القديمة بالداتابيز
+    delivered: 'مؤكد',  // حماية للطلبات القديمة بالداتابيز
+    cancelled: 'ملغي' 
+  }; 
+  return map[status] || 'غير مؤكد';
 }
 
 window.updateOrderStatus = function(id, newStatus) {
