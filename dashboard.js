@@ -142,12 +142,28 @@ function filterOrdersTable() {
   const query = (orderSearch?.value || '').toLowerCase();
   const statusFilter = orderStatusFilter ? orderStatusFilter.value : 'all';
   let filtered = orderDocsCache;
-  if(statusFilter !== 'all') filtered = filtered.filter(d => d.data().status === statusFilter);
-  if(query) filtered = filtered.filter(d => {
-    const userEmail = d.data().userEmail || '';
-    const userName = d.data().shippingInfo?.name || '';
-    return userEmail.toLowerCase().includes(query) || userName.toLowerCase().includes(query);
-  });
+  
+  // تطهير وتوحيد الفلتر العلوي ليتطابق مع مصفوفة الحالات الجديدة
+  if(statusFilter !== 'all') {
+    filtered = filtered.filter(d => {
+      const s = d.data().status || 'pending';
+      if (statusFilter === 'confirmed') {
+        return ['confirmed', 'processing', 'shipped', 'delivered'].includes(s);
+      }
+      if (statusFilter === 'cancelled') {
+        return s === 'cancelled';
+      }
+      return s === 'pending';
+    });
+  }
+  
+  if(query) {
+    filtered = filtered.filter(d => {
+      const userEmail = d.data().userEmail || '';
+      const userName = d.data().shippingInfo?.name || '';
+      return userEmail.toLowerCase().includes(query) || userName.toLowerCase().includes(query);
+    });
+  }
   renderOrdersTable(filtered);
 }
 
@@ -162,24 +178,31 @@ function loadDashboardData() {
     filterProductsTable();
   });
 
-  // 2. الطلبات (آخر الطلبات + صفحة الطلبات الكاملة)
+  // 2. الطلبات (نسخة مطورة ومحمية من الثقل والتعليق) ⚡
   db.collection("orders").onSnapshot(snap => {
     orderDocsCache = snap.docs;
-    document.getElementById('stat-orders').textContent = snap.size;
-    const pendingCount = snap.docs.filter(doc => doc.data().status === 'pending').length;
-    document.getElementById('stat-pending').textContent = pendingCount;
-    document.getElementById('pendingBadge').textContent = pendingCount;
+    if(document.getElementById('stat-orders')) document.getElementById('stat-orders').textContent = snap.size;
     
-   // حساب إجمالي الإيرادات من الطلبات المؤكدة حالياً أو الموصلة سابقاً 💰
-    let revenue = 0;
-    snap.docs.forEach(doc => {
-      const s = doc.data().status;
-      if(s === 'confirmed' || s === 'delivered' || s === 'processing' || s === 'shipped') {
-        revenue += (doc.data().total || 0);
+    const pendingCount = snap.docs.filter(doc => (doc.data().status || 'pending') === 'pending').length;
+    if(document.getElementById('stat-pending')) document.getElementById('stat-pending').textContent = pendingCount;
+    if(document.getElementById('pendingBadge')) document.getElementById('pendingBadge').textContent = pendingCount;
+    
+    // حساب إجمالي الإيرادات
+    let revenue = 0; 
+    snap.docs.forEach(doc => { 
+      if(['confirmed', 'processing', 'shipped', 'delivered'].includes(doc.data().status)) {
+        revenue += (doc.data().total || 0); 
       }
     });
-    document.getElementById('stat-revenue').textContent = revenue + " ج.م";
+    if(document.getElementById('stat-revenue')) document.getElementById('stat-revenue').textContent = revenue + " ج.م";
 
+    // 🎯 الحماية السحرية: لو التغيير محلي وناتج عن ضغطتك على الـ Dropdown حالاً،
+    // اخرج فوراً وما تعيدش بناء الجدول بالكامل عشان تمنع تجميد الشاشة والـ Lag!
+    if (snap.metadata.hasPendingWrites) {
+      return; 
+    }
+
+    filterOrdersTable();
   });
   // 3. طلبات الروشتة
   db.collection("prescriptionOrders").onSnapshot(snap => {
@@ -299,10 +322,35 @@ function getStatusLabel(status) {
 }
 
 // دالة التحديث الفوري المباشر للفايربيز
+// دالة التحديث الفوري اللحظي بالسيرفر والـ DOM معاً 🚀
 window.updateOrderStatus = function(id, newStatus) {
+  // 1️⃣ الـ Optimistic UI: تحديث شكل السطر والبادج في الـ DOM فوراً وبدون انتظار
+  const selectEl = document.querySelector(`select[onchange*="${id}"]`);
+  if (selectEl) {
+    const row = selectEl.closest('tr');
+    const badge = row?.querySelector('.status-badge');
+    if (badge) {
+      if (newStatus === 'confirmed') {
+        badge.textContent = 'مؤكد';
+        badge.className = 'status-badge status-delivered'; // كلاس الأخضر
+      } else if (newStatus === 'cancelled') {
+        badge.textContent = 'ملغي';
+        badge.className = 'status-badge status-cancelled'; // كلاس الأحمر
+      } else {
+        badge.textContent = 'غير مؤكد';
+        badge.className = 'status-badge status-pending';   // كلاس الأصفر
+      }
+    }
+  }
+
+  // 2️⃣ تحديث قاعدة البيانات في الخلفية بهدوء
   db.collection("orders").doc(id).update({ status: newStatus })
-    .then(() => showToast("✅ تم تحديث حالة الطلب بنجاح"))
-    .catch(() => showToast("❌ فشل تحديث حالة الطلب", "error"));
+    .then(() => {
+      showToast("✅ تم تحديث حالة الطلب بنجاح");
+    })
+    .catch(() => {
+      showToast("❌ فشل تحديث حالة الطلب", "error");
+    });
 };
 // [تعديل 1]: إضافة زرار "تعديل" وتمرير البيانات للـ Modal
 function renderProductsTable(docs) {
