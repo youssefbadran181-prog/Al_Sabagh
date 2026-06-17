@@ -710,7 +710,7 @@ window.viewCustomerDetails = async function(userId) {
 
     // تجهيز رابط واتساب الهاتف الأساسي
     const mainWaPhone = formatWhatsAppNumber(u.phone);
-    const mainWaMsg = encodeURIComponent(`أهلاً بك يا أستاذ ${u.name || 'عزيزنا العميل'}، معاك صيدلية الصباغ بخصوص الأوردر الخاص بك من الموقع الإلكتروني `);
+    const mainWaMsg = encodeURIComponent(`أهلاً بك يا أستاذ ${u.name || 'عزيزنا العميل'}، معاك صيدلية الصباغ لتاكيد الأوردر الخاص بك من الموقع الإلكتروني `);
 
     // رندرة العناوين المحفوظة مع تزويدها بروابط واتساب للمستلمين أيضاً
     let addressesHtml = '<p style="color:var(--muted); font-size:13px;">• لا توجد عناوين مسجلة في ملفه الشخصي</p>';
