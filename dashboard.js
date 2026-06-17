@@ -234,7 +234,7 @@ function renderOrdersTable(docs) {
     return;
   }
 
-  // 🎯 التعديل الأمني الأول: بناخد نسخة من المصفوفة عشان نرتّبها براحتنا من غير ما نعدل على الأصل المحمي
+  // أخذ نسخة من المصفوفة وترتيبها بشكل آمن لمنع الأخطاء الصامتة
   const sortedDocs = [...docs].sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
 
   sortedDocs.forEach((doc, index) => {
@@ -242,10 +242,15 @@ function renderOrdersTable(docs) {
     const id = doc.id.substring(0, 6).toUpperCase();
     const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : '—';
     
-    // 🎯 التعديل الأمني الثاني: فصل الشروط بالملي بره الـ HTML لمنع تداخل الاختيارات
-    const isPending   = data.status === 'pending' || !data.status;
-    const isConfirmed = ['confirmed', 'processing', 'shipped', 'delivered'].includes(data.status);
-    const isCancelled = data.status === 'cancelled';
+    // 🎯 السحر هنا: تطهير وتوحيد الحالة تماماً قبل رندرة الـ HTML
+    let currentStatus = data.status || 'pending';
+    if (['confirmed', 'processing', 'shipped', 'delivered'].includes(currentStatus)) {
+      currentStatus = 'confirmed'; // دمج كل حالات التأكيد القديمة والجديدة في حالة واحدة
+    } else if (currentStatus === 'cancelled') {
+      currentStatus = 'cancelled';
+    } else {
+      currentStatus = 'pending';
+    }
 
     const rowHtml = `
       <tr>
@@ -257,13 +262,15 @@ function renderOrdersTable(docs) {
         </td>
         <td>${data.items ? data.items.map(i => `${i.name} (${i.qty})`).join('، ') : '—'}</td>
         <td style="font-weight:bold; color:var(--teal);">${data.total || 0} ج.م</td>
-        <td><span class="status-badge status-${data.status || 'pending'}">${getStatusLabel(data.status)}</span></td>
+        
+        <td><span class="status-badge status-${currentStatus}">${getStatusLabel(currentStatus)}</span></td>
+        
         <td>${date}</td>
         <td>
           <select class="status-select" onchange="updateOrderStatus('${doc.id}', this.value)">
-            <option value="pending" ${isPending ? 'selected' : ''}>غير مؤكد</option>
-            <option value="confirmed" ${isConfirmed ? 'selected' : ''}>مؤكد</option>
-            <option value="cancelled" ${isCancelled ? 'selected' : ''}>ملغي</option>
+            <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>غير مؤكد</option>
+            <option value="confirmed" ${currentStatus === 'confirmed' ? 'selected' : ''}>مؤكد</option>
+            <option value="cancelled" ${currentStatus === 'cancelled' ? 'selected' : ''}>ملغي</option>
           </select>
         </td>
       </tr>`;
@@ -276,24 +283,19 @@ function renderOrdersTable(docs) {
   if(mainBody) mainBody.innerHTML = mainHtml;
 }
 
+// دالة جلب النصوص الصافية والمطابقة للحالة المسجلة
 function getStatusLabel(status) {
-  const map = { 
-    pending: 'غير مؤكد', 
-    confirmed: 'مؤكد', 
-    processing: 'مؤكد', 
-    shipped: 'مؤكد',    
-    delivered: 'مؤكد',  
-    cancelled: 'ملغي' 
-  }; 
-  return map[status] || 'غير مؤكد';
+  if (status === 'confirmed') return 'مؤكد';
+  if (status === 'cancelled') return 'ملغي';
+  return 'غير مؤكد';
 }
 
+// دالة التحديث الفوري بالسيرفر
 window.updateOrderStatus = function(id, newStatus) {
   db.collection("orders").doc(id).update({ status: newStatus })
     .then(() => showToast("✅ تم تحديث حالة الطلب بنجاح"))
     .catch(() => showToast("❌ فشل تحديث حالة الطلب", "error"));
 };
-
 // [تعديل 1]: إضافة زرار "تعديل" وتمرير البيانات للـ Modal
 function renderProductsTable(docs) {
   const body = document.getElementById('productsTableBody');
