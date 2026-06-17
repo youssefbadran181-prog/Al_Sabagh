@@ -227,20 +227,26 @@ function renderOrdersTable(docs) {
   let recentHtml = '';
   let mainHtml = '';
 
-  if (docs.length === 0) {
+  if (!docs || docs.length === 0) {
     const emptyRow = `<tr><td colspan="7" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>`;
     if(recentBody) recentBody.innerHTML = emptyRow;
     if(mainBody) mainBody.innerHTML = emptyRow;
     return;
   }
 
-  const sortedDocs = docs.sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+  // 🎯 التعديل الأمني الأول: بناخد نسخة من المصفوفة عشان نرتّبها براحتنا من غير ما نعدل على الأصل المحمي
+  const sortedDocs = [...docs].sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
 
   sortedDocs.forEach((doc, index) => {
     const data = doc.data();
     const id = doc.id.substring(0, 6).toUpperCase();
     const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : '—';
     
+    // 🎯 التعديل الأمني الثاني: فصل الشروط بالملي بره الـ HTML لمنع تداخل الاختيارات
+    const isPending   = data.status === 'pending' || !data.status;
+    const isConfirmed = ['confirmed', 'processing', 'shipped', 'delivered'].includes(data.status);
+    const isCancelled = data.status === 'cancelled';
+
     const rowHtml = `
       <tr>
         <td>#${id}</td>
@@ -255,9 +261,9 @@ function renderOrdersTable(docs) {
         <td>${date}</td>
         <td>
           <select class="status-select" onchange="updateOrderStatus('${doc.id}', this.value)">
-          <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>غير مؤكد</option>
-          <option value="confirmed" ${data.status === 'confirmed' || data.status === 'processing' || data.status === 'delivered' || data.status === 'shipped' ? 'selected' : ''}>مؤكد</option>
-          <option value="cancelled" ${data.status === 'cancelled' ? 'selected' : ''}>ملغي</option>
+            <option value="pending" ${isPending ? 'selected' : ''}>غير مؤكد</option>
+            <option value="confirmed" ${isConfirmed ? 'selected' : ''}>مؤكد</option>
+            <option value="cancelled" ${isCancelled ? 'selected' : ''}>ملغي</option>
           </select>
         </td>
       </tr>`;
@@ -274,9 +280,9 @@ function getStatusLabel(status) {
   const map = { 
     pending: 'غير مؤكد', 
     confirmed: 'مؤكد', 
-    processing: 'مؤكد', // حماية للطلبات القديمة بالداتابيز
-    shipped: 'مؤكد',    // حماية للطلبات القديمة بالداتابيز
-    delivered: 'مؤكد',  // حماية للطلبات القديمة بالداتابيز
+    processing: 'مؤكد', 
+    shipped: 'مؤكد',    
+    delivered: 'مؤكد',  
     cancelled: 'ملغي' 
   }; 
   return map[status] || 'غير مؤكد';
