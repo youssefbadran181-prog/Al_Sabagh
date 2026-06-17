@@ -30,7 +30,7 @@ function formatFirestoreDate(data) {
 }
 
 // ================================================
-//  مراقبة حالة تسجيل الدخول والأمان
+//  مراقبة حالة تسجيل الدخول والأمان (النسخة الآمنة من الطرد التلقائي) 🔒
 // ================================================
 document.addEventListener("DOMContentLoaded", () => {
   auth.onAuthStateChanged(async (user) => {
@@ -41,14 +41,20 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById('loginGate').classList.add('hidden');
           document.getElementById('dashboardApp').classList.remove('hidden');
           loadDashboardData();
-          initModalsAndActions(); // تشغيل الأزرار والـ Modals
+          initModalsAndActions(); 
         } else {
-          document.getElementById('loginGateError').textContent = "❌ خطأ: هذا الحساب لا يملك صلاحيات المسؤول.";
-          await auth.signOut();
+          // 🎯 التعديل السحري هنا: بنقفل اللوحة بس بنمنع الـ signOut التلقائي عشان ميبوظش تبويب العميل
+          document.getElementById('loginGate').classList.remove('hidden');
+          document.getElementById('dashboardApp').classList.add('hidden');
+          document.getElementById('loginGateError').innerHTML = `
+            ❌ تنبيه: الحساب الحالي (${escapeHtml(user.email)}) لا يملك صلاحيات المسؤول.<br/>
+            <button class="btn btn-sm btn-outline" style="margin-top:10px; padding:4px 12px; font-size:12px; cursor:pointer;" onclick="auth.signOut().then(() => window.location.reload())">🚪 خروج للحساب الحالي فقط</button>
+          `;
         }
       } catch (e) {
+        document.getElementById('loginGate').classList.remove('hidden');
+        document.getElementById('dashboardApp').classList.add('hidden');
         document.getElementById('loginGateError').textContent = "❌ حدث خطأ أثناء التحقق من الصلاحيات.";
-        await auth.signOut();
       }
     } else {
       document.getElementById('loginGate').classList.remove('hidden');
