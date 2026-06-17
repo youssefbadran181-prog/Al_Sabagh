@@ -11,23 +11,13 @@ const firebaseConfig = {
   measurementId: "G-SS0XVJC5XB"
 };
 
-// تشغيل الفايربيز
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+// 🎯 السحر هنا: تشغيل الفايربيز بنسخة مخصصة للمسؤولين فقط لمنع تداخل الجلسات نهائياً!
+const adminApp = firebase.initializeApp(firebaseConfig, "PharmaCareAdminInstance");
+const db       = adminApp.firestore();
+const auth     = adminApp.auth();
+
 let productDocsCache = [];
 let orderDocsCache = [];
-
-function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[ch]));
-}
-
-function formatFirestoreDate(data) {
-  const value = data?.createdAt || data?.subscribedAt;
-  return value?.seconds ? new Date(value.seconds * 1000).toLocaleDateString('ar-EG') : '-';
-}
 
 // ================================================
 //  مراقبة حالة تسجيل الدخول والأمان (النسخة الآمنة من الطرد التلقائي) 🔒
