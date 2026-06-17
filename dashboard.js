@@ -219,7 +219,6 @@ function loadDashboardData() {
 // ================================================
 //  دوال الـ Rendering لعرض البيانات جوه جداول الـ HTML
 // ================================================
-
 function renderOrdersTable(docs) {
   const recentBody = document.getElementById('recentOrdersBody');
   const mainBody = document.getElementById('ordersTableBody');
@@ -234,7 +233,7 @@ function renderOrdersTable(docs) {
     return;
   }
 
-  // أخذ نسخة من المصفوفة وترتيبها بشكل آمن لمنع الأخطاء الصامتة
+  // 1️⃣ حل تداخل السطور: أخذ نسخة مأمنة من المصفوفة لتفادي تلف داتا السيرفر
   const sortedDocs = [...docs].sort((a,b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
 
   sortedDocs.forEach((doc, index) => {
@@ -242,14 +241,17 @@ function renderOrdersTable(docs) {
     const id = doc.id.substring(0, 6).toUpperCase();
     const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : '—';
     
-    // 🎯 السحر هنا: تطهير وتوحيد الحالة تماماً قبل رندرة الـ HTML
-    let currentStatus = data.status || 'pending';
-    if (['confirmed', 'processing', 'shipped', 'delivered'].includes(currentStatus)) {
-      currentStatus = 'confirmed'; // دمج كل حالات التأكيد القديمة والجديدة في حالة واحدة
-    } else if (currentStatus === 'cancelled') {
+    // 2️⃣ حل ربط البادج بالـ Dropdown: توحيد وتطهير الحالات تماماً برمجياً
+    const rawStatus = data.status || 'pending';
+    let currentStatus = 'pending';
+    let badgeClass = 'status-pending'; // اللون الأصفر لغير المؤكد
+
+    if (['confirmed', 'processing', 'shipped', 'delivered'].includes(rawStatus)) {
+      currentStatus = 'confirmed';
+      badgeClass = 'status-delivered'; // استغلال كلاس التوصيل الأخضر الشيك ليلون كلمة "مؤكد" دايماً
+    } else if (rawStatus === 'cancelled') {
       currentStatus = 'cancelled';
-    } else {
-      currentStatus = 'pending';
+      badgeClass = 'status-cancelled'; // اللون الأحمر للملغي
     }
 
     const rowHtml = `
@@ -263,7 +265,7 @@ function renderOrdersTable(docs) {
         <td>${data.items ? data.items.map(i => `${i.name} (${i.qty})`).join('، ') : '—'}</td>
         <td style="font-weight:bold; color:var(--teal);">${data.total || 0} ج.م</td>
         
-        <td><span class="status-badge status-${currentStatus}">${getStatusLabel(currentStatus)}</span></td>
+        <td><span class="status-badge ${badgeClass}">${getStatusLabel(rawStatus)}</span></td>
         
         <td>${date}</td>
         <td>
@@ -283,14 +285,20 @@ function renderOrdersTable(docs) {
   if(mainBody) mainBody.innerHTML = mainHtml;
 }
 
-// دالة جلب النصوص الصافية والمطابقة للحالة المسجلة
+// دالة جلب المسميات الصحيحة للحالات
 function getStatusLabel(status) {
-  if (status === 'confirmed') return 'مؤكد';
-  if (status === 'cancelled') return 'ملغي';
-  return 'غير مؤكد';
+  const map = { 
+    pending: 'غير مؤكد', 
+    confirmed: 'مؤكد', 
+    processing: 'مؤكد', 
+    shipped: 'مؤكد',    
+    delivered: 'مؤكد',  
+    cancelled: 'ملغي' 
+  }; 
+  return map[status] || 'غير مؤكد';
 }
 
-// دالة التحديث الفوري بالسيرفر
+// دالة التحديث الفوري المباشر للفايربيز
 window.updateOrderStatus = function(id, newStatus) {
   db.collection("orders").doc(id).update({ status: newStatus })
     .then(() => showToast("✅ تم تحديث حالة الطلب بنجاح"))
