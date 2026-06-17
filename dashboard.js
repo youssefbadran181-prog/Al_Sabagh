@@ -614,7 +614,6 @@ function initModalsAndActions() {
       const reader = new FileReader();
       reader.onload = async function(evt) {
         try {
-          // 1️⃣ استخدام ArrayBuffer بدلاً من Binary لمنع تلف ملفات الـ .xlsx الحديثة وضمان قراءة السطور
           const data = new Uint8Array(evt.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheetName = workbook.SheetNames[0];
@@ -626,56 +625,64 @@ function initModalsAndActions() {
             return;
           }
 
-          showToast("⏳ جاري رفع وتنسيق المنتجات إلى السيرفر، برجاء الانتظار...");
+          showToast("⏳ جاري معالجة ورفع المنتجات وتطهير الشوائب...");
           let successCount = 0;
 
-          for (const row of jsonData) {
-            // 2️⃣ تطهير وتنظيف مفاتيح الأعمدة من أي مسافات مخفية أو حروف كابيتال (تأمين كامل ضد تمليخ الداتا)
-            const cleanRow = {};
-            Object.keys(row).forEach(key => {
-              if (key) cleanRow[key.trim().toLowerCase()] = row[key];
+          // 🎯 الدالة العبقرية لتطهير الرموز المخفية (مثل BOM \ufeff) والمسافات التالفة من الأعمدة
+          const getColumnValue = (rowObj, possibleNames) => {
+            const foundKey = Object.keys(rowObj).find(key => {
+              // إزالة كل الرموز الغريبة والمخفية والمسافات تماماً
+              const cleanKey = key.toLowerCase().replace(/[^\w\u0600-\u06FF]/g, '').trim();
+              return possibleNames.some(pName => {
+                const cleanPName = pName.toLowerCase().replace(/[^\w\u0600-\u06FF]/g, '').trim();
+                return cleanKey.includes(cleanPName) || cleanPName.includes(cleanKey);
+              });
             });
+            return foundKey ? rowObj[foundKey] : null;
+          };
 
-            // سحب الداتا بناءً على المفاتيح المطهرة تماماً لتطابق شيت الصيدلية بالملي
-            const name     = cleanRow['الاسم'] || cleanRow['name'];
-            const price    = parseFloat(cleanRow['السعر'] || cleanRow['price']);
-            let category   = cleanRow['الفئة'] || cleanRow['category'];
-            const emoji    = cleanRow['الصورة'] || cleanRow['رابط الصورة'] || cleanRow['emoji'] || cleanRow['image_url'] || '💊';
-            const oldPrice = parseFloat(cleanRow['السعر القديم'] || cleanRow['oldprice']) || null;
-            const badge    = cleanRow['الشارة'] || cleanRow['badge'] || null;
-            const desc     = cleanRow['الوصف'] || cleanRow['desc'] || '';
+          for (const row of jsonData) {
+            // سحب القيم بأمان تام ومقاومة كاملة لعيوب التصدير 🛡️
+            const name     = getColumnValue(row, ['الاسم', 'name']);
+            const priceRaw = getColumnValue(row, ['السعر', 'price']);
+            let category   = getColumnValue(row, ['الفئة', 'category']);
+            const emoji    = getColumnValue(row, ['الصورة', 'رابط', 'emoji', 'image', 'url']) || '💊';
+            const oldPrice = parseFloat(getColumnValue(row, ['القديم', 'oldprice'])) || null;
+            const badge    = getColumnValue(row, ['الشارة', 'badge']) || null;
+            const desc     = getColumnValue(row, ['الوصف', 'desc']) || '';
 
-            // توحيد الفئة لحروف صغيرة لتطابق فلاتر وعدادات الموقع
+            const price = parseFloat(priceRaw);
+
+            // توحيد الفئة لحروف صغيرة لتطابق عدادات اللوحة وموقع الزبائن
             if (category) {
-              category = category.trim().toLowerCase();
+              category = String(category).trim().toLowerCase();
             }
 
-            // التحقق والرفع الآمن للفايرستور
+            // الفحص والرفع الآمن للفايرستور
             if (name && category && !isNaN(price)) {
               await db.collection("products").add({
                 id: "p_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
-                name,
-                category,
-                emoji,
-                price,
-                oldPrice,
-                badge,
-                desc,
+                name: String(name).trim(),
+                category: category,
+                emoji: String(emoji).trim(),
+                price: price,
+                oldPrice: oldPrice,
+                badge: badge,
+                desc: String(desc).trim(),
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
               successCount++;
             }
           }
 
-          showToast(`🎉 بنجاح! تم رفع ${successCount} منتج من شيت الإكسيل وجاري عرضهم.`);
-          excelInput.value = ''; // تصفير الحقل
+          showToast(`🎉 تم رفع ${successCount} منتج بنجاح وضبط أسمائهم وفئاتهم آلياً!`);
+          excelInput.value = ''; // تصفير الحقل ليعمل مجدداً بمرونة
         } catch (err) {
           console.error("Excel Error:", err);
           showToast("❌ حدث خطأ أثناء قراءة أو رفع ملف الإكسيل", "error");
         }
       };
       
-      // 3️⃣ قراءة الملف كـ ArrayBuffer لمنع أي أخطاء صامتة في التشفير
       reader.readAsArrayBuffer(file);
     });
   }
