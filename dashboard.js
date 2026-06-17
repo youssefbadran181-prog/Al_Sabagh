@@ -602,7 +602,7 @@ function initModalsAndActions() {
       }
     };
   }
-  // ================================================
+// ================================================
   //  فيتشر الرفع الجماعي الذكية والمطورة من ملف إكسيل 📥
   // ================================================
   const excelInput = document.getElementById('excelFileInput');
@@ -614,34 +614,43 @@ function initModalsAndActions() {
       const reader = new FileReader();
       reader.onload = async function(evt) {
         try {
-          const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-          const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          
-          if (jsonData.length === 0) {
-            showToast("⚠️ ملف الإكسيل فارغ أو غير صحيح!", "error");
+          // 1️⃣ استخدام ArrayBuffer بدلاً من Binary لمنع تلف ملفات الـ .xlsx الحديثة وضمان قراءة السطور
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          if (!jsonData || jsonData.length === 0) {
+            showToast("⚠️ لم يتم العثور على أي صفوف داخل ملف الإكسيل!", "error");
             return;
           }
 
-          showToast("⏳ جاري معالجة ورفع المنتجات وتنسيقها تلقائياً...");
+          showToast("⏳ جاري رفع وتنسيق المنتجات إلى السيرفر، برجاء الانتظار...");
           let successCount = 0;
 
           for (const row of jsonData) {
-            // 🎯 معالجة ذكية: الكود يقبل الآن الحروف الكبيرة والصغيرة وعمود الـ Image_URL الخاص بملفك!
-            const name     = row['الاسم'] || row['name'] || row['Name'];
-            const price    = parseFloat(row['السعر'] || row['price'] || row['Price']);
-            let category   = row['الفئة'] || row['category'] || row['Category'];
-            const emoji    = row['الصورة'] || row['رابط الصورة'] || row['emoji'] || row['Image_URL'] || '💊';
-            const oldPrice = parseFloat(row['السعر القديم'] || row['oldPrice'] || row['OldPrice']) || null;
-            const badge    = row['الشارة'] || row['badge'] || row['Badge'] || null;
-            const desc     = row['الوصف'] || row['desc'] || row['Desc'] || '';
+            // 2️⃣ تطهير وتنظيف مفاتيح الأعمدة من أي مسافات مخفية أو حروف كابيتال (تأمين كامل ضد تمليخ الداتا)
+            const cleanRow = {};
+            Object.keys(row).forEach(key => {
+              if (key) cleanRow[key.trim().toLowerCase()] = row[key];
+            });
 
-            // 🎯 توحيد الفئة: تحويل الكلمة تلقائياً إلى حروف صغيرة (مثال: Medicine تحول إلى medicine)
-            // لكي تتماشى تماماً مع فلاتر وعدادات الموقع والداشبورد بدون أي لغبطة
+            // سحب الداتا بناءً على المفاتيح المطهرة تماماً لتطابق شيت الصيدلية بالملي
+            const name     = cleanRow['الاسم'] || cleanRow['name'];
+            const price    = parseFloat(cleanRow['السعر'] || cleanRow['price']);
+            let category   = cleanRow['الفئة'] || cleanRow['category'];
+            const emoji    = cleanRow['الصورة'] || cleanRow['رابط الصورة'] || cleanRow['emoji'] || cleanRow['image_url'] || '💊';
+            const oldPrice = parseFloat(cleanRow['السعر القديم'] || cleanRow['oldprice']) || null;
+            const badge    = cleanRow['الشارة'] || cleanRow['badge'] || null;
+            const desc     = cleanRow['الوصف'] || cleanRow['desc'] || '';
+
+            // توحيد الفئة لحروف صغيرة لتطابق فلاتر وعدادات الموقع
             if (category) {
               category = category.trim().toLowerCase();
             }
 
-            // التحقق من الشروط الإلزامية قبل الرفع
+            // التحقق والرفع الآمن للفايرستور
             if (name && category && !isNaN(price)) {
               await db.collection("products").add({
                 id: "p_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
@@ -658,14 +667,16 @@ function initModalsAndActions() {
             }
           }
 
-          showToast(`🎉 تم رفع ${successCount} منتج بنجاح وضبط أسمائهم وفئاتهم آلياً!`);
+          showToast(`🎉 بنجاح! تم رفع ${successCount} منتج من شيت الإكسيل وجاري عرضهم.`);
           excelInput.value = ''; // تصفير الحقل
         } catch (err) {
           console.error("Excel Error:", err);
-          showToast("❌ حدث خطأ أثناء معالجة أو رفع ملف الإكسيل", "error");
+          showToast("❌ حدث خطأ أثناء قراءة أو رفع ملف الإكسيل", "error");
         }
-      }; 
-      reader.readAsBinaryString(file);
+      };
+      
+      // 3️⃣ قراءة الملف كـ ArrayBuffer لمنع أي أخطاء صامتة في التشفير
+      reader.readAsArrayBuffer(file);
     });
   }
   // تفعيل زرار حذف العرض الحالي نهائياً من الموقع
