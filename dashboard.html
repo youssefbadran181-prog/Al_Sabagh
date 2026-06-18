@@ -429,5 +429,34 @@
     </div>
   </div>
 </div>
+<div id="customerModalOverlay" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+  
+  <div class="modal" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; width: 100%; max-width: 550px; position: relative; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; direction: rtl;">
+    
+    <button type="button" class="modal-close" onclick="closeCustomerModal()" style="position: absolute; top: 16px; left: 16px; background: none; border: none; color: var(--text-muted); font-size: 26px; cursor: pointer;">
+      &times;
+    </button>
+    
+    <div id="customerModalContent" style="margin-top: 10px;"></div>
+    
+    <div style="text-align: center; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+      <button type="button" class="btn btn-outline" onclick="closeCustomerModal()" style="padding: 8px 28px; font-size: 14px; border-radius: 50px; width: 100%;">
+        إغلاق النافذة
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // دالة الإغلاق السريع والمأمن للمودال لتنظيف الشاشة
+  function closeCustomerModal() {
+    const modal = document.getElementById('customerModalOverlay');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.add('hidden');
+    }
+  }
+</script>
 </body>
 </html>
