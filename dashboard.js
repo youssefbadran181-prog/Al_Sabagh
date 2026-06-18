@@ -899,53 +899,83 @@ function showToast(msg, type = "success") {
   }
 }
 
-// دالة جلب وفتح تفاصيل العميل بالكامل ومجهزة بالتحويل للواتساب 👤💬
+// 👤 دالة عرض ملف العميل والعنوان المختار (النسخة المدرعة ومضادة للتعليق)
 window.viewCustomerDetails = async function(userId, orderId) {
-  const contentEl = document.getElementById('customerModalContent');
-  if (!contentEl) return;
-
-  contentEl.innerHTML = `<div style="text-align:center; padding:30px;">⏳ جاري سحب ملف العميل وتفاصيل شحن الطلب...</div>`;
-  document.getElementById('customerModalOverlay').classList.remove('hidden');
-
-  // 1️⃣ أولاً: سحب عنوان الأوردر المحدد من الكاش فوراً وبأعلى أمان برمجياً
-  let orderAddressHtml = '';
-  if (window.orderDocsCache && orderId) {
-    const currentOrder = window.orderDocsCache.find(d => d.id === orderId);
-    if (currentOrder && currentOrder.data().shippingInfo) {
-      const ship = currentOrder.data().shippingInfo;
-      
-      // تهيئة رقم واتساب العميل المختار لهذا الأوردر للتواصل بضغطة واحدة
-      let cleanPhone = String(ship.phone || '').trim().replace(/\D/g, '');
-      if (cleanPhone.startsWith('0')) cleanPhone = '20' + cleanPhone.substring(1);
-
-      orderAddressHtml = `
-        <div style="background: rgba(10,191,184,0.08); border: 1.5px dashed var(--teal); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 24px;">
-          <h4 style="color: var(--teal); font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-            📌 العنوان المختار لهذا الطلب بالتحديد:
-          </h4>
-          <p style="font-size: 14px; margin-bottom: 6px; color: var(--text-main);"><strong>👤 اسم المستلم:</strong> ${escapeHtml(ship.name)}</p>
-          <p style="font-size: 14px; margin-bottom: 6px; color: var(--text-main);"><strong>📍 عنوان الشحن الحليبي:</strong> ${escapeHtml(ship.addressDetail)}</p>
-          <p style="font-size: 14px; color: var(--text-main);"><strong>📞 هاتف المستلم:</strong> 
-            <a href="https://wa.me/${cleanPhone}" target="_blank" style="color: #25D366; text-decoration: underline; font-weight: 700; margin-right: 4px;">
-              ${escapeHtml(ship.phone)} (تأكيد الأوردر واتساب 🟢)
-            </a>
-          </p>
-        </div>`;
-    }
+  // 🎯 التأمين الأول: لقط الحاوية (Overlay) بكافة المسميات المحتملة في الـ HTML لمنع الـ Null Crash
+  const overlayEl = document.getElementById('customerModalOverlay') || 
+                    document.getElementById('customerOverlay') || 
+                    document.getElementById('customerModal') ||
+                    document.getElementById('userModalOverlay');
+                    
+  const contentEl = document.getElementById('customerModalContent') || 
+                    document.getElementById('customerContent') ||
+                    document.getElementById('userModalContent');
+  
+  if (!overlayEl) {
+    console.error("❌ [PharmaCare] عطل: لم يتم العثور على عنصر الـ Overlay للمودال في ملف الـ HTML!");
+    alert("⚠️ عطل نظام: مودال عرض تفاصيل العميل غير موجود في الـ HTML الخاص بهذه الصفحة!");
+    return;
   }
 
-  // 2️⃣ ثانياً: جلب الملف العام وباقي العناوين المحفوظة من الفايربيز كالمعتاد
+  // إظهار المودال فوراً بأمان بكافة الطرق الممكنة
+  overlayEl.classList.remove('hidden');
+  overlayEl.style.display = 'flex'; 
+
+  if (!contentEl) return;
+  contentEl.innerHTML = `<div style="text-align:center; padding:30px; color:var(--teal);">⏳ جاري سحب ملف العميل وتفاصيل شحن الطلب...</div>`;
+
+  // 1️⃣ أولاً: استخراج عنوان الشحن المختار لهذا الأوردر بالتحديد من الكاش
+  let orderAddressHtml = '';
   try {
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (!userDoc.exists) {
-      contentEl.innerHTML = orderAddressHtml + `<div style="text-align:center; padding:20px; color:var(--muted);">👤 هذا الطلب تم بواسطة عميل زائر أو حساب غير مسجل</div>`;
+    if (window.orderDocsCache && orderId) {
+      const currentOrder = window.orderDocsCache.find(d => d.id === orderId);
+      if (currentOrder && currentOrder.data().shippingInfo) {
+        const ship = currentOrder.data().shippingInfo;
+        
+        // تهيئة وتطهير رقم الواتساب الخاص بالطلب للتأكيد الفوري
+        let cleanPhone = String(ship.phone || '').trim().replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) {
+          cleanPhone = '20' + cleanPhone.substring(1);
+        }
+
+        const safeClean = (val) => typeof escapeHtml === 'function' ? escapeHtml(val) : (val || '—');
+
+        orderAddressHtml = `
+          <div style="background: rgba(10,191,184,0.08); border: 1.5px dashed var(--teal); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: right;">
+            <h4 style="color: var(--teal); font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; font-weight:700;">
+              📌 العنوان المختار لهذا الطلب بالتحديد:
+            </h4>
+            <p style="font-size: 14px; margin-bottom: 6px; color: var(--text-main);"><strong>👤 اسم المستلم:</strong> ${safeClean(ship.name)}</p>
+            <p style="font-size: 14px; margin-bottom: 6px; color: var(--text-main);"><strong>📍 عنوان الشحن بالتفصيل:</strong> ${safeClean(ship.addressDetail || ship.address)}</p>
+            <p style="font-size: 14px; color: var(--text-main);"><strong>📞 هاتف المستلم:</strong> 
+              <a href="https://wa.me/${cleanPhone}" target="_blank" style="color: #25D366; text-decoration: underline; font-weight: 700; margin-right: 4px;">
+                ${safeClean(ship.phone)} (تأكيد الأوردر واتساب 🟢)
+              </a>
+            </p>
+          </div>`;
+      }
+    }
+  } catch (cacheErr) {
+    console.error("خطأ عابر أثناء قراءة كاش الطلب:", cacheErr);
+  }
+
+  // 2️⃣ ثانياً: جلب الملف العام وباقي العناوين المسجلة في حساب العميل من الفايربيز
+  try {
+    if (typeof db === 'undefined' || !userId || userId === 'undefined' || userId === 'null') {
+      contentEl.innerHTML = orderAddressHtml + `<div style="text-align:center; padding:20px; color:var(--text-muted);">👤 هذا الطلب تم بواسطة عميل زائر (بدون تسجيل حساب أول بوضع تجريبي)</div>`;
       return;
     }
 
-    const u = userDoc.data();
-    const dateStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : '—';
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (!userDoc.exists) {
+      contentEl.innerHTML = orderAddressHtml + `<div style="text-align:center; padding:20px; color:var(--text-muted);">👤 لم يتم العثور على ملف مستخدم مسجل لهذا الحساب</div>`;
+      return;
+    }
 
-    // بناء قائمة باقي العناوين التاريخية المحفوظة في حسابه
+    const u = userDoc.data() || {};
+    const dateStr = u.createdAt ? new Date(u.createdAt.seconds ? u.createdAt.seconds * 1000 : u.createdAt).toLocaleDateString('ar-EG') : '—';
+    const safeClean = (val) => typeof escapeHtml === 'function' ? escapeHtml(val) : (val || '—');
+
     let allSavedAddressesHtml = '';
     if (u.addresses && u.addresses.length > 0) {
       u.addresses.forEach((addr, idx) => {
@@ -953,36 +983,36 @@ window.viewCustomerDetails = async function(userId, orderId) {
         if (cleanAddrPhone.startsWith('0')) cleanAddrPhone = '20' + cleanAddrPhone.substring(1);
 
         allSavedAddressesHtml += `
-          <div class="card-item" style="background: rgba(255,255,255,0.02); padding: 12px; margin-bottom: 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.05);">
-            <strong>📍 العنوان ${idx + 1}:</strong> ${escapeHtml(addr.addressDetail)} <br/>
-            <small style="color:var(--text-muted)">👤 المستلم: ${escapeHtml(addr.name)} | 📞 هاتف: <a href="https://wa.me/${cleanAddrPhone}" target="_blank" style="color:var(--teal);">${escapeHtml(addr.phone)}</a></small>
+          <div style="background: rgba(255,255,255,0.02); padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: right;">
+            <strong>📍 العنوان المسجل ${idx + 1}:</strong> ${safeClean(addr.addressDetail || addr.address)} <br/>
+            <small style="color:var(--text-muted)">👤 المستلم: ${safeClean(addr.name)} | 📞 هاتف: <a href="https://wa.me/${cleanAddrPhone}" target="_blank" style="color:var(--teal);">${safeClean(addr.phone)}</a></small>
           </div>`;
       });
     } else {
-      allSavedAddressesHtml = `<p style="color:var(--text-muted); font-size:13px; text-align:center;">📭 لا توجد عناوين أخرى مسجلة بحسابه</p>`;
+      allSavedAddressesHtml = `<p style="color:var(--text-muted); font-size:13px; text-align:center;">📭 لا توجد عناوين أخرى مخزنة بحسابه</p>`;
     }
 
-    // 3️⃣ حقن اللوحة المتكاملة (العنوان المختار الحالي في الصدارة + تحته البروفايل وباقي العناوين)
+    // حقن اللوحة المتكاملة داخل المودال بأمان واحترافية
     contentEl.innerHTML = `
       ${orderAddressHtml}
-
-      <div style="margin-bottom: 24px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
-        <h3 style="font-size: 18px; color: var(--white); margin-bottom: 14px; text-align:center;">👤 ملف بيانات العميل العامة</h3>
-        <p style="margin-bottom:8px;"><strong>📧 البريد الإلكتروني:</strong> ${escapeHtml(u.email || '—')}</p>
-        <p style="margin-bottom:8px;"><strong>📞 الهاتف الأساسي للحساب:</strong> ${escapeHtml(u.phone || '—')}</p>
-        <p style="margin-bottom:8px;"><strong>📅 تاريخ الانضمام للموقع:</strong> ${dateStr}</p>
-        <p style="margin-bottom:16px;"><strong>🛡️ نوع الحساب:</strong> ${escapeHtml(u.role || 'customer')}</p>
+      
+      <div style="margin-bottom: 24px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; text-align: right;">
+        <h3 style="font-size: 17px; color: var(--white); margin-bottom: 14px; text-align:center; font-weight:700;">👤 ملف بيانات العميل العامة</h3>
+        <p style="margin-bottom:8px; font-size:14px;"><strong>📧 البريد الإلكتروني:</strong> ${safeClean(u.email)}</p>
+        <p style="margin-bottom:8px; font-size:14px;"><strong>📞 الهاتف الأساسي:</strong> ${safeClean(u.phone)}</p>
+        <p style="margin-bottom:8px; font-size:14px;"><strong>📅 تاريخ الانضمام للموقع:</strong> ${dateStr}</p>
+        <p style="margin-bottom:16px; font-size:14px;"><strong>🛡️ نوع الحساب:</strong> <span style="color:var(--teal); font-weight:600;">${safeClean(u.role || 'customer')}</span></p>
       </div>
 
-      <div>
-        <h4 style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">🏠 جميع العناوين المخزنة داخل حسابه بروفايل وثائقي (${u.addresses ? u.addresses.length : 0}):</h4>
+      <div style="text-align: right;">
+        <h4 style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px; font-weight:600;">🏠 أرشيف العناوين المخزنة داخل حسابه بروفايل وثائقي (${u.addresses ? u.addresses.length : 0}):</h4>
         ${allSavedAddressesHtml}
       </div>
     `;
 
   } catch (err) {
-    console.error("Error viewing profile:", err);
-    contentEl.innerHTML = orderAddressHtml + `<div style="color:var(--red); text-align:center; padding:15px;">❌ فشل تحميل ملف العميل العام بالكامل</div>`;
+    console.error("❌ [PharmaCare] خطأ أثناء معالجة جلب بيانات العميل:", err);
+    contentEl.innerHTML = orderAddressHtml + `<div style="color:var(--red); text-align:center; padding:15px;">❌ فشل تحميل ملف العميل العام: ${err.message}</div>`;
   }
 };
 // ========================================================
