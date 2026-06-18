@@ -24,14 +24,18 @@
   --transition: 0.25s ease;
 }
 
-html { scroll-behavior: smooth; }
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* منع التمرير الجانبي تماماً على الموبايل */
+  position: relative;
+}
 
 body {
   font-family: 'Cairo', sans-serif;
   background: var(--dark-bg);
   color: var(--text-main);
   direction: rtl;
-  overflow-x: hidden;
 }
 
 a { text-decoration: none; color: inherit; }
