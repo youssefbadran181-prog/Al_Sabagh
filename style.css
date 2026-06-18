@@ -990,4 +990,19 @@ section { padding: 80px 24px; }
   .contact-form .btn { float: none !important; width: 100% !important; }
   .search-bar { width: 100% !important; max-width: 100% !important; }
   .modal { max-width: 95% !important; padding: 20px 16px !important; }
+  /* 🎯 فرد قسم الروشتة السريع (طلب سريع) عمودياً فوق بعض على الموبايل */
+  .order-container {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  
+  .order-info {
+    text-align: center !important;
+  }
+  
+  .order-steps {
+    align-items: flex-start !important;
+    max-width: fit-content;
+    margin: 0 auto !important;
+  }
 }
