@@ -781,6 +781,49 @@ if ($("searchBtn")) {
       }
     });
   }
+  // 🎯 كود تشغيل زرار تسجيل الدخول بجوجل 🌐
+  const googleLoginBtn = document.getElementById("googleLoginBtn") || document.querySelector(".btn-google");
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener("click", async () => {
+      if (!firebaseReady) { 
+        showToast("⚠️ الفايربيز غير متصل - وضع تجريبي", "error"); 
+        return; 
+      }
+      
+      try {
+        // استدعاء ميكانيزم جوجل بوب-أب من الفايربيز
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        // فحص ذكي: لو المستخدم أول مرة يسجل في الموقع، بننشئ له ملف جوه الـ users
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        if (!userDoc.exists) {
+          await db.collection("users").doc(user.uid).set({
+            name: user.displayName,
+            email: user.email,
+            role: "customer",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        
+        if (typeof closeAuthModal === 'function') closeAuthModal(); // إغلاق نافذة الدخول
+        showToast(`🎉 أهلاً بك يا ${user.displayName.split(' ')[0]}!`);
+        
+      } catch (error) {
+        console.error("Google Auth Error:", error);
+        
+        // كاشف الأعطال: لو نسيت تفعلها في السيرفر هيقولك فوراً
+        if (error.code === "auth/operation-not-allowed") {
+          showToast("❌ عطل: يجب تفعيل تسجيل جوجل من Firebase Console", "error");
+        } else if (error.code === "auth/popup-closed-by-user") {
+          showToast("⚠️ تم إغلاق نافذة تسجيل الدخول قبل الاكتمال");
+        } else {
+          showToast("❌ فشل تسجيل الدخول بواسطة جوجل", "error");
+        }
+      }
+    });
+  }
 
   // تشغيل السستم الأساسي
   initFirebase();
