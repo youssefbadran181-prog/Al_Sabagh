@@ -249,6 +249,9 @@ function loadDashboardData() {
 //  دوال الـ Rendering لعرض البيانات جوه جداول الـ HTML
 // ================================================
 function renderOrdersTable(docs) {
+  // 🎯 التعديل 1: حفظ مستندات الطلبات في كاش عالمي فوراً في أول الدالة عشان المودال يقرأ منها
+  window.orderDocsCache = docs;
+
   const recentBody = document.getElementById('recentOrdersBody');
   const mainBody = document.getElementById('ordersTableBody');
   
@@ -287,8 +290,8 @@ function renderOrdersTable(docs) {
       <tr>
         <td>#${id}</td>
         <td style="cursor: pointer; color: var(--teal); font-weight: 600; text-decoration: underline;" 
-            onclick="viewCustomerDetails('${data.userId}')" 
-            title="اضغط لعرض ملف العميل الكامل">
+            onclick="viewCustomerDetails('${data.userId}', '${doc.id}')" 
+            title="اضغط لعرض ملف العميل والعنوان المحدد لهذا الطلب">
             ${data.shippingInfo ? `${data.shippingInfo.name} (${data.shippingInfo.phone})` : data.userEmail || 'عميل مجهول'}
         </td>
         <td>${data.items ? data.items.map(i => `${i.name} (${i.qty})`).join('، ') : '—'}</td>
