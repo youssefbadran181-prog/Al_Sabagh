@@ -824,47 +824,63 @@ if ($("searchBtn")) {
       }
     });
   }
-  // ========================================================
-// 📊 تحديث عداد المنتجات داخل الفئات (Categories) تلقائياً وبشكل حي ⚡
+// ========================================================
+// 📊 تحديث عداد المنتجات داخل الفئات (النسخة الذكية والموحدة للحروف) ⚡
 // ========================================================
 if (typeof db !== 'undefined') {
-  // عمل مستمع حي لكوليكشن المنتجات بالكامل
+  // تفعيل مستمع حي على كوليكشن المنتجات
   db.collection("products").onSnapshot(snapshot => {
+    console.log("📊 [PharmaCare Categories] وصلنا تحديث! إجمالي المنتجات في السيرفر:", snapshot.size);
     
-    // 1️⃣ تفريغ كائن لتجميع عداد كل فئة من السيرفر
     const categoryCounts = {};
+    
+    // 🔥 دالة سحرية لتطهير وتوحيد النصوص العربية (لحل أزمة الهمزات والهاء والياء)
+    const normalizeArabic = (text) => {
+      return String(text ?? "")
+        .trim()
+        .replace(/[أإآا]/g, "ا")   // تحويل كل أشكال الألف لألف عادية
+        .replace(/[ةه]/g, "ه")    // توحيد التاء المربوطة والهاء
+        .replace(/[ىي]/g, "ي");   // توحيد الألف اللينة والياء
+    };
 
-    // 2️⃣ اللوب على كل المنتجات الحالية وحساب تكرار كل فئة
+    // 1️⃣ قراءة المنتجات وتجميع أعداد الفئات بعد توحيد الحروف
     snapshot.docs.forEach(doc => {
       const product = doc.data() || {};
-      const catName = product.category ? String(product.category).trim() : "";
+      const rawCat = product.category ? String(product.category).trim() : "";
       
-      if (catName) {
-        categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
+      if (rawCat) {
+        const normalizedCat = normalizeArabic(rawCat);
+        categoryCounts[normalizedCat] = (categoryCounts[normalizedCat] || 0) + 1;
       }
     });
 
-    // 3️⃣ الذكاء هنا: قراءة الفئات من الـ HTML وتحديث العداد الخاص بها بالملي
+    console.log("📊 [PharmaCare Categories] العدادات المستلمة من السيرفر بعد التطهير:", categoryCounts);
+
+    // 2️⃣ تحديث عناصر الـ HTML ديناميكياً
+    let updatedCards = 0;
     document.querySelectorAll('.cat-card').forEach(card => {
       const nameEl = card.querySelector('.cat-name');
       const countEl = card.querySelector('.cat-count');
       
       if (nameEl && countEl) {
-        const currentHTMLCatName = nameEl.textContent.trim();
+        const originalHTMLName = nameEl.textContent.trim();
+        const normalizedHTMLName = normalizeArabic(originalHTMLName);
         
-        // جلب العدد الفعلي من السيرفر، لو الفئة ملهاش منتجات هتنزل 0 تلقائياً
-        const actualCount = categoryCounts[currentHTMLCatName] || 0;
+        // جلب العدد الفعلي بناءً على الاسم الموحد
+        const actualCount = categoryCounts[normalizedHTMLName] || 0;
         
-        // حقن الرقم الجديد وتحديث الشاشة فوراً
         countEl.textContent = `${actualCount} منتج`;
+        updatedCards++;
       }
     });
-    
-    console.log("📊 [PharmaCare] تم تحديث عدادات الفئات حياً بناءً على المخزون الحالي!");
+
+    console.log(`📊 [PharmaCare Categories] تم تحديث عدد (${updatedCards}) كروت فئات بنجاح على الشاشة!`);
 
   }, error => {
-    console.error("❌ [PharmaCare] خطأ أثناء احتساب عداد الفئات:", error);
+    console.error("❌ [PharmaCare Categories] خطأ من الفايربيز أثناء جلب العدادات:", error);
   });
+} else {
+  console.error("❌ [PharmaCare Categories] عطل: متغير db غير معرف في هذا الملف!");
 }
 
   // تشغيل السستم الأساسي
