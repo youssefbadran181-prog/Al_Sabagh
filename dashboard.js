@@ -900,83 +900,89 @@ function showToast(msg, type = "success") {
 }
 
 // دالة جلب وفتح تفاصيل العميل بالكامل ومجهزة بالتحويل للواتساب 👤💬
-window.viewCustomerDetails = async function(userId) {
-  if (!userId || userId === "undefined" || userId === "null") { 
-    showToast("⚠️ هذا الطلب تم بواسطة عميل زائر (غير مسجل بحساب)", "error"); 
-    return; 
+window.viewCustomerDetails = async function(userId, orderId) {
+  const contentEl = document.getElementById('customerModalContent');
+  if (!contentEl) return;
+
+  contentEl.innerHTML = `<div style="text-align:center; padding:30px;">⏳ جاري سحب ملف العميل وتفاصيل شحن الطلب...</div>`;
+  document.getElementById('customerModalOverlay').classList.remove('hidden');
+
+  // 1️⃣ أولاً: سحب عنوان الأوردر المحدد من الكاش فوراً وبأعلى أمان برمجياً
+  let orderAddressHtml = '';
+  if (window.orderDocsCache && orderId) {
+    const currentOrder = window.orderDocsCache.find(d => d.id === orderId);
+    if (currentOrder && currentOrder.data().shippingInfo) {
+      const ship = currentOrder.data().shippingInfo;
+      
+      // تهيئة رقم واتساب العميل المختار لهذا الأوردر للتواصل بضغطة واحدة
+      let cleanPhone = String(ship.phone || '').trim().replace(/\D/g, '');
+      if (cleanPhone.startsWith('0')) cleanPhone = '20' + cleanPhone.substring(1);
+
+      orderAddressHtml = `
+        <div style="background: rgba(10,191,184,0.08); border: 1.5px dashed var(--teal); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 24px;">
+          <h4 style="color: var(--teal); font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            📌 العنوان المختار لهذا الطلب بالتحديد:
+          </h4>
+          <p style="font-size: 14px; margin-bottom: 6px; color: var(--text-main);"><strong>👤 اسم المستلم:</strong> ${escapeHtml(ship.name)}</p>
+          <p style="font-size: 14px; margin-bottom: 6px; color: var(--text-main);"><strong>📍 عنوان الشحن الحليبي:</strong> ${escapeHtml(ship.addressDetail)}</p>
+          <p style="font-size: 14px; color: var(--text-main);"><strong>📞 هاتف المستلم:</strong> 
+            <a href="https://wa.me/${cleanPhone}" target="_blank" style="color: #25D366; text-decoration: underline; font-weight: 700; margin-right: 4px;">
+              ${escapeHtml(ship.phone)} (تأكيد الأوردر واتساب 🟢)
+            </a>
+          </p>
+        </div>`;
+    }
   }
-  
-  const contentEl = document.getElementById('userDetailContent'); 
-  const overlay = document.getElementById('userDetailOverlay');
-  if (!contentEl || !overlay) return;
-  
-  contentEl.innerHTML = `🔄 جاري سحب ملف العميل من قاعدة البيانات...`; 
-  overlay.classList.remove('hidden');
-  
+
+  // 2️⃣ ثانياً: جلب الملف العام وباقي العناوين المحفوظة من الفايربيز كالمعتاد
   try {
-    const userDoc = await db.collection("users").doc(userId).get(); 
+    const userDoc = await db.collection("users").doc(userId).get();
     if (!userDoc.exists) {
-      contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--red);">❌ البيانات غير موجودة بالسيرفر.</div>`;
+      contentEl.innerHTML = orderAddressHtml + `<div style="text-align:center; padding:20px; color:var(--muted);">👤 هذا الطلب تم بواسطة عميل زائر أو حساب غير مسجل</div>`;
       return;
     }
-    
+
     const u = userDoc.data();
-    const joinDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : 'غير محدد';
-    
-    // دالة داخلية لتنظيف رقم الموبايل وتحويله للصيغة الدولية الصحيحة للواتساب
-    const formatWhatsAppNumber = (phone) => {
-      if (!phone) return '';
-      const trimmed = phone.trim();
-      return trimmed.startsWith('0') ? '20' + trimmed.slice(1) : trimmed;
-    };
+    const dateStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : '—';
 
-    // تجهيز رابط واتساب الهاتف الأساسي
-    const mainWaPhone = formatWhatsAppNumber(u.phone);
-    const mainWaMsg = encodeURIComponent(`أهلاً بك يا أستاذ ${u.name || 'عزيزنا العميل'}، معاك صيدلية الصباغ لتاكيد الأوردر الخاص بك من الموقع الإلكتروني `);
-
-    // رندرة العناوين المحفوظة مع تزويدها بروابط واتساب للمستلمين أيضاً
-    let addressesHtml = '<p style="color:var(--muted); font-size:13px;">• لا توجد عناوين مسجلة في ملفه الشخصي</p>';
+    // بناء قائمة باقي العناوين التاريخية المحفوظة في حسابه
+    let allSavedAddressesHtml = '';
     if (u.addresses && u.addresses.length > 0) {
-      addressesHtml = '<div style="display:flex; flex-direction:column; gap:8px; max-height:150px; overflow-y:auto; padding-left:5px;">';
-      u.addresses.forEach((addr, i) => {
-        const addrWaPhone = formatWhatsAppNumber(addr.phone);
-        const addrWaMsg = encodeURIComponent(`أهلاً يا ${addr.name}، معاك صيدلية الصباغ بخصوص طلبك المطلوب شحنه إلى: ${addr.addressDetail}`);
-        
-        addressesHtml += `
-          <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 6px; border-right: 3px solid var(--teal); font-size:13px;">
-            📍 <strong>العنوان ${i+1}:</strong> ${addr.addressDetail}<br/>
-            <span style="color:var(--muted); font-size:12px;">👤 المستلم: ${addr.name} | 📞 هاتف: <a href="https://wa.me/${addrWaPhone}?text=${addrWaMsg}" target="_blank" style="color:var(--teal); text-decoration:underline; font-weight:bold;" title="اضغط لفتح شات واتساب للمستلم">${addr.phone} 💬</a></span>
+      u.addresses.forEach((addr, idx) => {
+        let cleanAddrPhone = String(addr.phone || '').trim().replace(/\D/g, '');
+        if (cleanAddrPhone.startsWith('0')) cleanAddrPhone = '20' + cleanAddrPhone.substring(1);
+
+        allSavedAddressesHtml += `
+          <div class="card-item" style="background: rgba(255,255,255,0.02); padding: 12px; margin-bottom: 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.05);">
+            <strong>📍 العنوان ${idx + 1}:</strong> ${escapeHtml(addr.addressDetail)} <br/>
+            <small style="color:var(--text-muted)">👤 المستلم: ${escapeHtml(addr.name)} | 📞 هاتف: <a href="https://wa.me/${cleanAddrPhone}" target="_blank" style="color:var(--teal);">${escapeHtml(addr.phone)}</a></small>
           </div>`;
       });
-      addressesHtml += '</div>';
+    } else {
+      allSavedAddressesHtml = `<p style="color:var(--text-muted); font-size:13px; text-align:center;">📭 لا توجد عناوين أخرى مسجلة بحسابه</p>`;
     }
 
-    // كتابة البيانات الكاملة وتلوين رابط الواتساب الجديد باللون الأخضر المميز
+    // 3️⃣ حقن اللوحة المتكاملة (العنوان المختار الحالي في الصدارة + تحته البروفايل وباقي العناوين)
     contentEl.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 14px; text-align: right; line-height: 1.6;">
-        <div style="background: rgba(0, 128, 128, 0.1); padding: 10px; border-radius: 6px; text-align:center; font-weight:bold; font-size:16px; color:var(--teal);">
-          👤 ${u.name || 'بدون اسم'}
-        </div>
-        <div><strong>📧 البريد الإلكتروني:</strong> <a href="mailto:${u.email}" style="color:var(--teal);">${u.email || '—'}</a></div>
-        
-        <div>
-          <strong>📞 الهاتف الأساسي:</strong> 
-          <a href="https://wa.me/${mainWaPhone}?text=${mainWaMsg}" target="_blank" style="color: #25D366; font-weight: bold; text-decoration: underline;" title="اضغط لفتح شات واتساب وتأكيد الطلب فوراً">
-            ${u.phone || '—'} 🟢 (تأكيد الأوردر واتساب)
-          </a>
-        </div>
-        
-        <div><strong>📅 تاريخ الانضمام للموقع:</strong> ${joinDate}</div>
-        <div><strong>🛡️ نوع الحساب:</strong> ${u.role === 'admin' ? 'مسؤول (Admin)' : 'عميل (Customer)'}</div>
-        
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 5px 0;" />
-        
-        <h4 style="color: var(--teal); margin-bottom: 4px; font-size:14px;">🏠 جميع العناوين المحفوظة بحسابه (${u.addresses ? u.addresses.length : 0}):</h4>
-        ${addressesHtml}
+      ${orderAddressHtml}
+
+      <div style="margin-bottom: 24px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+        <h3 style="font-size: 18px; color: var(--white); margin-bottom: 14px; text-align:center;">👤 ملف بيانات العميل العامة</h3>
+        <p style="margin-bottom:8px;"><strong>📧 البريد الإلكتروني:</strong> ${escapeHtml(u.email || '—')}</p>
+        <p style="margin-bottom:8px;"><strong>📞 الهاتف الأساسي للحساب:</strong> ${escapeHtml(u.phone || '—')}</p>
+        <p style="margin-bottom:8px;"><strong>📅 تاريخ الانضمام للموقع:</strong> ${dateStr}</p>
+        <p style="margin-bottom:16px;"><strong>🛡️ نوع الحساب:</strong> ${escapeHtml(u.role || 'customer')}</p>
+      </div>
+
+      <div>
+        <h4 style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">🏠 جميع العناوين المخزنة داخل حسابه بروفايل وثائقي (${u.addresses ? u.addresses.length : 0}):</h4>
+        ${allSavedAddressesHtml}
       </div>
     `;
-  } catch (e) {
-    contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--red);">❌ حدث خطأ أثناء الاتصال بالسيرفر.</div>`;
+
+  } catch (err) {
+    console.error("Error viewing profile:", err);
+    contentEl.innerHTML = orderAddressHtml + `<div style="color:var(--red); text-align:center; padding:15px;">❌ فشل تحميل ملف العميل العام بالكامل</div>`;
   }
 };
 // ========================================================
