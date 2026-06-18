@@ -854,25 +854,8 @@ section { padding: 80px 24px; }
 /* ========================
    RESPONSIVE (نسخة الموبايل المضمونة) 🎉
 ======================== */
-@media (max-width: 992px) {
-  .hero { 
-    grid-template-columns: 1fr !important; 
-    text-align: center !important; 
-    padding: 100px 20px 60px !important; 
-  }
-  .hero-content p { margin: 0 auto 32px !important; }
-  .hero-buttons { justify-content: center !important; }
-  .hero-stats { justify-content: center !important; }
-  .hero-image { display: none !important; } /* إخفاء الكارت العائم على الشاشات الصغيرة لتوفير مساحة */
-
-  .footer-grid { grid-template-columns: 1fr 1fr !important; }
-  .order-container { grid-template-columns: 1fr !important; }
-  .flash-content { flex-direction: column !important; text-align: center !important; }
-  .flash-timer { justify-content: center !important; }
-}
-
 @media (max-width: 768px) {
-  /* إخفاء القائمة الأفقية وإظهار زرار الهامبرجر */
+  /* 1️⃣ إخفاء القائمة الأفقية وإظهار زرار الهامبرجر بأمان */
   .nav-links { 
     display: none !important; 
     flex-direction: column !important; 
@@ -902,6 +885,24 @@ section { padding: 80px 24px; }
   .product-image { height: 140px !important; font-size: 40px !important; }
   .product-name { font-size: 13px !important; }
   .price-current { font-size: 15px !important; }
+  
+  /* 2️⃣ تقليل البادج الضخم للفورم على الموبايل عشان يدي مساحة مريحة للكتابة والـ Inputs 📱 */
+  .order-form, .contact-form {
+    padding: 20px 16px !important;
+  }
+
+  /* 3️⃣ إلغاء الفلوت لزرار التواصل وجعله بكامل العرض لتسهيل الضغط */
+  .contact-form .btn {
+    float: none !important;
+    width: 100% !important;
+    margin-top: 10px;
+  }
+
+  /* 4️⃣ ضبط مقاس شريط البحث الحي على شاشات الموبايل */
+  .search-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
   
   /* تظبيط شاشة العناوين المنبثقة على الموبايل */
   .modal { max-width: 95% !important; padding: 20px 16px !important; }

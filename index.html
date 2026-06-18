@@ -88,7 +88,7 @@
   <div class="cat-grid">
     <div class="cat-card" data-cat="vitamins">
       <div class="cat-icon">💊</div>
-      <div class="cat-name">فيتامينات ومكملات</div>
+      <div class="cat-name">أدويه</div>
       <div class="cat-count" id="count-vitamins">0 منتج</div>
     </div>
     <div class="cat-card" data-cat="skincare">
@@ -98,7 +98,7 @@
     </div>
     <div class="cat-card" data-cat="medicine">
       <div class="cat-icon">💉</div>
-      <div class="cat-name">أدوية ومستلزمات</div>
+      <div class="cat-name">مستلزمات طبيه</div>
       <div class="cat-count" id="count-medicine">0 منتج</div>
     </div>
     <div class="cat-card" data-cat="baby">
@@ -108,7 +108,7 @@
     </div>
     <div class="cat-card" data-cat="dental">
       <div class="cat-icon">🦷</div>
-      <div class="cat-name">العناية بالأسنان</div>
+      <div class="cat-name">العناية الشخصيه</div>
       <div class="cat-count" id="count-dental">0 منتج</div>
     </div>
     <div class="cat-card" data-cat="devices">
@@ -147,11 +147,11 @@
   <!-- Filter Bar -->
   <div class="filter-bar">
     <button class="filter-btn active" data-filter="all">الكل</button>
-    <button class="filter-btn" data-filter="vitamins">فيتامينات</button>
+    <button class="filter-btn" data-filter="vitamins">أدويه</button>
     <button class="filter-btn" data-filter="skincare">بشرة</button>
-    <button class="filter-btn" data-filter="medicine">أدوية</button>
+    <button class="filter-btn" data-filter="medicine">مستلزمات</button>
     <button class="filter-btn" data-filter="baby">أطفال</button>
-    <button class="filter-btn" data-filter="dental">أسنان</button>
+    <button class="filter-btn" data-filter="dental">عنايه شخصيه</button>
     <button class="filter-btn" data-filter="devices">أجهزة</button>
   </div>
 
@@ -199,16 +199,9 @@
       <div class="form-group">
         <textarea id="orderNotes" placeholder="اكتب اسم الدواء أو ملاحظاتك هنا..." rows="3"></textarea>
       </div>
-      <div class="form-group file-upload" id="fileDropZone">
-        <input type="file" id="prescriptionFile" accept=".jpg,.jpeg,.png,.pdf" hidden />
-        <div class="file-label" onclick="document.getElementById('prescriptionFile').click()">
-          <span>📎</span>
-          <span>ارفع الروشتة هنا أو <u>اضغط للرفع</u></span>
-          <small>JPG, PNG أو PDF – حجم أقصى 5MB</small>
-        </div>
-        <div id="fileName" class="file-name"></div>
-      </div>
-      <button class="btn btn-primary btn-block" id="submitOrderBtn">إرسال الطلب الآن</button>
+      <button type="button" id="submitOrderBtn" class="btn btn-primary btn-block">
+        💬 إرسال الروشتة عبر الواتساب الآن
+      </button>
     </div>
   </div>
 </section>
@@ -277,7 +270,7 @@
       <p>صيدليتك الإلكترونية الموثوقة لتوصيل الأدوية والمنتجات الصحية لباب بيتك.</p>
       <div class="social-links">
         <a href="https://www.facebook.com/sydlyh.alsbagh.balqryn.almdabhh?locale=ar_AR">f</a>
-        <a href="#">in</a>
+        <a href="https://www.instagram.com/elsabagh_pharmacy66?igsh=bWNobHk2NDZ4bTR4">in</a>
       </div>
     </div>
     <div class="footer-col">

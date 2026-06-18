@@ -1,3 +1,9 @@
+// 🎯 حل أزمة الكراش العالمي: تعريف دالة escapeHtml جوه الداشبورد لحماية كل الجداول من الانهيار
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
 // ================================================
 //  Firebase Configuration
 // ================================================
@@ -321,7 +327,6 @@ function getStatusLabel(status) {
   return map[status] || 'غير مؤكد';
 }
 
-// دالة التحديث الفوري المباشر للفايربيز
 // دالة التحديث الفوري اللحظي بالسيرفر والـ DOM معاً 🚀
 window.updateOrderStatus = function(id, newStatus) {
   // 1️⃣ الـ Optimistic UI: تحديث شكل السطر والبادج في الـ DOM فوراً وبدون انتظار
@@ -352,11 +357,40 @@ window.updateOrderStatus = function(id, newStatus) {
       showToast("❌ فشل تحديث حالة الطلب", "error");
     });
 };
-// [تعديل 1]: إضافة زرار "تعديل" وتمرير البيانات للـ Modal
+
+// [تعديل 1 المطور]: دالة رندرة جدول المنتجات الآمنة والمقاومة للكراش 📦
+// 1️⃣ دالة الفلترة والبحث المؤمنة والمضادة للاختفاء العشوائي 🔍
+function filterProductsTable() {
+  const query = (productSearch?.value || '').toLowerCase().trim();
+  let catFilter = (productCatFilter?.value || 'all').trim();
+
+  let filtered = productDocsCache;
+
+  // 🎯 الحماية الذكية: لو الفلتر قيمته "all" أو فارغ "" أو مكتوب "كل الفئات"، يعرض كل المنتجات بدون حظرها
+  if (catFilter !== 'all' && catFilter !== '' && catFilter !== 'كل الفئات') {
+    filtered = filtered.filter(d => {
+      const productCat = (d.data().category || '').toLowerCase().trim();
+      return productCat === catFilter.toLowerCase();
+    });
+  }
+
+  if (query) {
+    filtered = filtered.filter(d => String(d.data().name || '').toLowerCase().includes(query));
+  }
+
+  renderProductsTable(filtered);
+}
+
+// 2️⃣ دالة رندرة جدول المنتجات الآمنة والمقاومة للكراش 📦
 function renderProductsTable(docs) {
   const body = document.getElementById('productsTableBody');
   let html = '';
   
+  if (!docs || docs.length === 0) {
+    if(body) body.innerHTML = `<tr><td colspan="7" style="text-align:center;">📦 لا توجد منتجات معروضة تلتزم بالفلاتر الحالية</td></tr>`;
+    return;
+  }
+
   docs.forEach(doc => {
     const p = doc.data();
     
@@ -375,21 +409,32 @@ function renderProductsTable(docs) {
         <td><span style="color:var(--red); font-weight:600;">${p.badge || '—'}</span></td>
         <td>
           <div class="action-btns">
-            <button class="act-btn edit" onclick="openEditProductModal('${doc.id}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️ تعديل</button>
+            <button class="act-btn edit" onclick="openEditProductModal('${doc.id}')">✏️ تعديل</button>
             <button class="act-btn del" onclick="deleteProduct('${doc.id}')">🗑️ حذف</button>
           </div>
         </td>
       </tr>`;
   });
-  if(body) body.innerHTML = html || `<tr><td colspan="7" style="text-align:center;">📦 لا توجد منتجات معروضة</td></tr>`;
+  
+  if(body) body.innerHTML = html;
 }
 
-// [تعديل 2]: دالة فتح الـ Modal وملء البيانات عند الرغبة في التعديل
-window.openEditProductModal = function(docId, productData) {
+// 3️⃣ دالة فتح الـ Modal وسحب البيانات المأمنة من كاش مصفوفة الداشبورد الذكية 🧠
+window.openEditProductModal = function(docId) {
+  // البحث عن المنتج داخل مصفوفة الكاش المحفوظة في الداشبورد تلقائياً لمنع أي أخطاء قراءة بسبب الرموز
+  const doc = productDocsCache.find(d => d.id === docId);
+  if (!doc) {
+    showToast("❌ خطأ: لم يتم العثور على بيانات هذا المنتج في الذاكرة", "error");
+    return;
+  }
+  
+  const productData = doc.data();
+
   document.getElementById('productModalTitle').textContent = "تعديل بيانات المنتج";
   document.getElementById('saveProductBtn').textContent = "💾 تحديث المنتج";
   document.getElementById('editProductId').value = docId; // تعبئة حقل الـ ID المخفي
 
+  // تعبئة البيانات الشخصية الصافية والمحمية داخل خانات الفورم
   document.getElementById('pName').value = productData.name || '';
   document.getElementById('pCategory').value = productData.category || '';
   document.getElementById('pEmoji').value = productData.emoji || '';
@@ -400,7 +445,6 @@ window.openEditProductModal = function(docId, productData) {
 
   document.getElementById('productModalOverlay').classList.remove('hidden');
 };
-
 // حذف منتج
 window.deleteProduct = function(id) {
   if(confirm("هل أنت متأكد من حذف هذا المنتج نهائياً؟")) {
@@ -456,25 +500,62 @@ function renderMessagesGrid(docs) {
   if(grid) grid.innerHTML = html || `<div class="loading-cell">💬 لا توجد رسائل تواصل واردة حالياً</div>`;
 }
 
+// 📧 دالة رندرة جدول المشتركين (النسخة الفائقة ومضادة للأعطال مع كاشف ذكي)
 function renderNewsletterTable(docs) {
-  const body = document.getElementById('newsletterBody');
-  if(!body) return;
-  
-  let html = '';
-  if(docs.length === 0) {
-    html = '<tr><td colspan="3" style="text-align:center;">📭 لا توجد اشتراكات حالياً</td></tr>';
-  } else {
-    docs.forEach((doc, index) => {
-      const data = doc.data();
-      const date = formatFirestoreDate(data);
-      html += `<tr>
-        <td>${index + 1}</td>
-        <td>${data.email || '—'}</td>
-        <td>${date}</td>
-      </tr>`;
-    });
+  // البحث عن عنصر الجدول بكافة أسمائه المحتملة لتأمين العرض دايماً
+  const body = document.getElementById('newsletterBody') || document.getElementById('newsletterTableBody');
+  if (!body) return;
+
+  try {
+    let html = '';
+    
+    // التحقق الآمن من وجود المصفوفة ونوعها قبل بدء اللوب
+    if (!docs || !Array.isArray(docs) || docs.length === 0) {
+      html = '<tr><td colspan="3" style="text-align:center;">📭 لا توجد اشتراكات حالياً</td></tr>';
+    } else {
+      docs.forEach((doc, index) => {
+        try {
+          // حماية مزدوجة: فحص هل المستند سليم ويحتوي على دالة data
+          if (!doc || typeof doc.data !== 'function') return;
+          
+          const data = doc.data() || {};
+          const email = data.email || '—';
+
+          // 📍 قراءة ومعالجة التاريخ محلياً وبأمان فائق ومستقل
+          let date = '—';
+          const timestamp = data.createdAt || data.subscribedAt;
+          
+          if (timestamp && timestamp.seconds) {
+            date = new Date(timestamp.seconds * 1000).toLocaleDateString('ar-EG');
+          } else if (timestamp) {
+            date = String(timestamp);
+          }
+
+          // فحص أمان دالة الـ escapeHtml قبل تشغيلها لمنع انهيار السطر
+          const cleanEmail = typeof escapeHtml === 'function' ? escapeHtml(email) : email;
+
+          // بناء السطر
+          html += `<tr>
+            <td>${index + 1}</td>
+            <td><strong>${cleanEmail}</strong></td>
+            <td>${date}</td>
+          </tr>`;
+          
+        } catch (innerErr) {
+          // لو سطر واحد فيه مشكلة، اطبعه في الـ Console وتخطاه بأمان لتكملة باقي الجدول
+          console.error("خطأ عابر في قراءة سطر مشترك:", innerErr);
+        }
+      });
+    }
+
+    // حقن الداتا بالكامل جوه الـ HTML
+    body.innerHTML = html || '<tr><td colspan="3" style="text-align:center;">📭 لا توجد اشتراكات حالياً</td></tr>';
+
+  } catch (error) {
+    console.error("Newsletter Rendering Error:", error);
+    // 🎯 كاشف الأعطال: هيطبع لك الكود المسبب للمشكلة حياً على الشاشة بدل الرسالة المبهمة!
+    body.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--red); font-weight:600;">❌ عطل نظام: ${escapeHtml(error.message || error)}</td></tr>`;
   }
-  body.innerHTML = html;
 }
 
 window.deleteDocument = function(collectionName, id) {
@@ -618,47 +699,64 @@ function initModalsAndActions() {
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          // 🎯 التعديل العبقري: استخدام { header: 1 } لتحويل الشيت لمصفوفة صفوف وأعمدة نقية (Matrix Mode)
+          // التعديل ده بيتخطى تماماً أي مشاكل أو عيوب في تشفير عناوين السيستم الإداري
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-          if (!jsonData || jsonData.length === 0) {
-            showToast("⚠️ لم يتم العثور على أي صفوف داخل ملف الإكسيل!", "error");
+          if (!rows || rows.length <= 1) {
+            showToast("⚠️ لم يتم العثور على أي بيانات داخل ملف الإكسيل!", "error");
             return;
           }
 
-          showToast("⏳ جاري معالجة ورفع المنتجات وتطهير الشوائب...");
+          showToast("⏳ جاري قراءة ورفع المنتجات إلى السيرفر، برجاء الانتظار...");
           let successCount = 0;
 
-          // 🎯 الدالة العبقرية لتطهير الرموز المخفية (مثل BOM \ufeff) والمسافات التالفة من الأعمدة
-          const getColumnValue = (rowObj, possibleNames) => {
-            const foundKey = Object.keys(rowObj).find(key => {
-              // إزالة كل الرموز الغريبة والمخفية والمسافات تماماً
-              const cleanKey = key.toLowerCase().replace(/[^\w\u0600-\u06FF]/g, '').trim();
-              return possibleNames.some(pName => {
-                const cleanPName = pName.toLowerCase().replace(/[^\w\u0600-\u06FF]/g, '').trim();
-                return cleanKey.includes(cleanPName) || cleanPName.includes(cleanKey);
-              });
-            });
-            return foundKey ? rowObj[foundKey] : null;
-          };
+          // 1️⃣ قراءة السطر الأول (العناوين) وتطهيرها لتحديد أماكن الأعمدة ديناميكياً لو الترتيب اختلف
+          const headers = rows[0].map(h => String(h || '').toLowerCase().replace(/[^\w\u0600-\u06FF]/g, '').trim());
+          
+          // تعيين قيم افتراضية بناءً على شيت الصيدلية الحالي (A=0, B=1, C=2, D=3)
+          let nameIdx = 0;
+          let priceIdx = 1;
+          let imageIdx = 2;
+          let catIdx = 3;
+          let oldPriceIdx = -1;
+          let badgeIdx = -1;
+          let descIdx = -1;
 
-          for (const row of jsonData) {
-            // سحب القيم بأمان تام ومقاومة كاملة لعيوب التصدير 🛡️
-            const name     = getColumnValue(row, ['الاسم', 'name']);
-            const priceRaw = getColumnValue(row, ['السعر', 'price']);
-            let category   = getColumnValue(row, ['الفئة', 'category']);
-            const emoji    = getColumnValue(row, ['الصورة', 'رابط', 'emoji', 'image', 'url']) || '💊';
-            const oldPrice = parseFloat(getColumnValue(row, ['القديم', 'oldprice'])) || null;
-            const badge    = getColumnValue(row, ['الشارة', 'badge']) || null;
-            const desc     = getColumnValue(row, ['الوصف', 'desc']) || '';
+          // فحص ديناميكي سريع للتأكيد بنسبة 100% من مكان كل عمود
+          headers.forEach((header, idx) => {
+            if (header.includes('name') || header.includes('الاسم')) nameIdx = idx;
+            if (header.includes('price') || header.includes('السعر')) priceIdx = idx;
+            if (header.includes('image') || header.includes('url') || header.includes('الصورة') || header.includes('emoji')) imageIdx = idx;
+            if (header.includes('category') || header.includes('الفئة')) catIdx = idx;
+            if (header.includes('oldprice') || header.includes('القديم')) oldPriceIdx = idx;
+            if (header.includes('badge') || header.includes('الشارة')) badgeIdx = idx;
+            if (header.includes('desc') || header.includes('الوصف')) descIdx = idx;
+          });
+
+          // 2️⃣ بدء اللوب من السطر الثاني (Index 1) لتخطي صف العناوين والرفع للـ Firebase
+          for (let i = 1; i < rows.length; i++) {
+            const currentRow = rows[i];
+            // تخطي السطور الفاضية تماماً في الشيت
+            if (!currentRow || currentRow.length === 0) continue;
+
+            const name     = currentRow[nameIdx];
+            const priceRaw = currentRow[priceIdx];
+            let category   = currentRow[catIdx];
+            const emoji    = currentRow[imageIdx] || '💊';
+            const oldPrice = oldPriceIdx !== -1 ? parseFloat(currentRow[oldPriceIdx]) : null;
+            const badge    = badgeIdx !== -1 ? currentRow[badgeIdx] : null;
+            const desc     = descIdx !== -1 ? currentRow[descIdx] : '';
 
             const price = parseFloat(priceRaw);
 
-            // توحيد الفئة لحروف صغيرة لتطابق عدادات اللوحة وموقع الزبائن
+            // توحيد الفئة لحروف صغيرة لتطابق عدادات الداشبورد وموقع الزبائن
             if (category) {
               category = String(category).trim().toLowerCase();
             }
 
-            // الفحص والرفع الآمن للفايرستور
+            // الفحص والرفع الآمن والمنسق للفايرستور
             if (name && category && !isNaN(price)) {
               await db.collection("products").add({
                 id: "p_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
@@ -666,20 +764,20 @@ function initModalsAndActions() {
                 category: category,
                 emoji: String(emoji).trim(),
                 price: price,
-                oldPrice: oldPrice,
-                badge: badge,
-                desc: String(desc).trim(),
+                oldPrice: isNaN(oldPrice) ? null : oldPrice,
+                badge: badge ? String(badge).trim() : null,
+                desc: desc ? String(desc).trim() : '',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
               successCount++;
             }
           }
 
-          showToast(`🎉 تم رفع ${successCount} منتج بنجاح وضبط أسمائهم وفئاتهم آلياً!`);
+          showToast(`🎉 بنجاح! تم قراءة ورفع ${successCount} منتج من شيت الإكسيل.`);
           excelInput.value = ''; // تصفير الحقل ليعمل مجدداً بمرونة
         } catch (err) {
           console.error("Excel Error:", err);
-          showToast("❌ حدث خطأ أثناء قراءة أو رفع ملف الإكسيل", "error");
+          showToast("❌ حدث خطأ أثناء معالجة أو رفع ملف الإكسيل", "error");
         }
       };
       
@@ -734,26 +832,55 @@ function initModalsAndActions() {
 // ================================================
 //  تصدير الرسائل البريدية كـ CSV
 // ================================================
+// 🎯 تفعيل زرار تصدير المشتركين كـ CSV بشكل آمن ومقاوم للأعطال والرموز التالفة 📊
 const exportEmailsBtn = document.getElementById('exportEmailsBtn');
 if(exportEmailsBtn) {
   exportEmailsBtn.addEventListener('click', async () => {
     try {
+      showToast("⏳ جاري سحب وتجهيز قائمة المشتركين للتصدير...");
       const snap = await db.collection("newsletter").get();
-      let csv = 'البريد الإلكتروني,تاريخ الاشتراك\n';
+      
+      if (snap.empty) {
+        showToast("⚠️ لا توجد أي بيانات لتصديرها حالياً!", "error");
+        return;
+      }
+
+      // 💡 السحر هنا: إضافة \ufeff في أول الملف عشان Excel يفتح ملف الـ CSV ويقرأ العربي والتواريخ بشكل سليم
+      let csv = '\ufeffالبريد الإلكتروني,تاريخ الاشتراك\n';
+      
       snap.docs.forEach(doc => {
-        const data = doc.data();
-        const date = formatFirestoreDate(data);
-        csv += `"${String(data.email || '').replace(/"/g, '""')}","${date}"\n`;
+        try {
+          if (!doc || typeof doc.data !== 'function') return;
+          const data = doc.data() || {};
+          const email = data.email || '—';
+          
+          // معالجة التاريخ بأمان فائق مطابقة للجدول
+          let date = '—';
+          const timestamp = data.createdAt || data.subscribedAt;
+          if (timestamp && timestamp.seconds) {
+            date = new Date(timestamp.seconds * 1000).toLocaleDateString('ar-EG');
+          } else if (timestamp) {
+            date = String(timestamp);
+          }
+          
+          // تنظيف الإيميل وحقنه في السطر بأمان
+          csv += `"${String(email).replace(/"/g, '""')}","${date}"\n`;
+        } catch (innerErr) {
+          console.error("خطأ عابر في تصدير سطر مشترك:", innerErr);
+        }
       });
       
+      // إنشاء وتحميل الملف فوراً للكمبيوتر أو الموبايل
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `newsletter-subscribers-${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
-      showToast("✅ تم تصدير الرسائل البريدية بنجاح!");
+      
+      showToast("✅ تم تصدير كشف المشتركين بنجاح!");
     } catch(e) {
-      showToast("❌ حدث خطأ في التصدير", "error");
+      console.error("Export Error:", e);
+      showToast("❌ حدث خطأ أثناء محاولة تصدير البيانات", "error");
     }
   });
 }
@@ -849,3 +976,102 @@ window.viewCustomerDetails = async function(userId) {
     contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--red);">❌ حدث خطأ أثناء الاتصال بالسيرفر.</div>`;
   }
 };
+// ========================================================
+// 1️⃣ أولاً: المستمع الحي لرسائل التواصل (بيسحب الداتا فوراً من السيرفر) ⚡
+// ========================================================
+if (typeof db !== 'undefined') {
+  db.collection("contactMessages").onSnapshot(snap => {
+    // تشغيل دالة الرندرة وعرض الرسائل تلقائياً أول ما أي زبون يبعت رسالة
+    renderContactMessagesTable(snap.docs);
+  }, error => {
+    console.error("Firebase Messages Error:", error);
+  });
+}
+
+// ========================================================
+// 1️⃣ المستمع الحي لرسائل التواصل (مع طباعة تقارير في الـ Console) ⚡
+// ========================================================
+if (typeof db !== 'undefined') {
+  db.collection("contactMessages").onSnapshot(snap => {
+    console.log("📥 [PharmaCare] وصلنا تحديث من السيرفر! عدد الرسائل الحالية:", snap.size);
+    renderContactMessagesTable(snap.docs);
+  }, error => {
+    console.error("❌ [PharmaCare] خطأ من الفايربيز أثناء جلب الرسائل:", error);
+  });
+} else {
+  console.error("❌ [PharmaCare] خطأ كاريثي: متغير db الخاص بالفايربيز غير معرف في هذا الملف!");
+}
+
+// ========================================================
+// 2️⃣ دالة الرندرة الذكية (تبني الجدول ديناميكياً لو العنصر Div أو Tbody) 💬
+// ========================================================
+// 📨 دالة عرض كروت الرسائل (النسخة المطورة للتحويل التلقائي للواتساب)
+function renderMessagesGrid(docs) {
+  const container = document.getElementById('messagesGrid') || document.getElementById('messagesContainer');
+  if (!container) return;
+
+  try {
+    let html = '';
+
+    if (!docs || docs.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">📭 لا توجد رسائل حالياً</div>`;
+      return;
+    }
+
+    docs.forEach(doc => {
+      try {
+        if (!doc || typeof doc.data !== 'function') return;
+        const data = doc.data() || {};
+        const id = doc.id;
+        
+        const clean = (val) => typeof escapeHtml === 'function' ? escapeHtml(val) : (val || '—');
+
+        // 🎯 السحر هنا: تهيئة وتطهير الرقم ليكون متوافقاً مع رابط الواتساب العالمي
+        let rawPhone = String(data.phone || '').trim();
+        let whatsappUrl = '#';
+        
+        if (rawPhone) {
+          // إزالة أي مسافات أو رموز زائدة
+          let cleanPhone = rawPhone.replace(/\D/g, ''); 
+          // لو الرقم بيبدأ بصفر (زي 010...) بنشيل الصفر ونحط كود مصر 20
+          if (cleanPhone.startsWith('0')) {
+            cleanPhone = '20' + cleanPhone.substring(1);
+          }
+          whatsappUrl = `https://wa.me/${cleanPhone}`;
+        }
+
+        html += `
+          <div class="message-card" style="position:relative;">
+            <div class="msg-header">
+              <strong>${clean(data.name)}</strong> 👤
+            </div>
+            <div class="msg-email">${clean(data.email)} 📧</div>
+            
+            <div class="msg-phone">
+              <a href="${whatsappUrl}" target="_blank" title="اضغط لفتح محادثة واتساب فوراً" 
+                 style="color: #25D366; text-decoration: underline; font-weight: 600; cursor: pointer;">
+                ${clean(data.phone)} 📞
+              </a>
+            </div>
+            
+            <div class="msg-subject" style="color: var(--teal); margin-top:8px;"><strong>الموضوع:</strong> ${clean(data.subject)}</div>
+            <div class="msg-body" style="margin-top:5px; font-style:italic;">${clean(data.message)}</div>
+            
+            <button class="act-btn del" onclick="deleteMessage('${id}')" style="margin-top:15px;">🗑️ حذف</button>
+          </div>`;
+          
+      } catch (innerErr) {
+        console.error("خطأ عابر في كرت رسالة:", innerErr);
+      }
+    });
+
+    container.innerHTML = html;
+
+  } catch (error) {
+    console.error("Grid Rendering Error:", error);
+    container.innerHTML = `<p style="text-align:center; color:var(--red);">❌ خطأ في عرض الكروت: ${error.message}</p>`;
+  }
+}
+
+// ربط المسميات احتياطياً لضمان العمل تحت أي استدعاء عشوائي
+window.renderMessagesTable = renderContactMessagesTable;

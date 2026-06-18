@@ -497,9 +497,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if($("products")) $("products").scrollIntoView({ behavior: "smooth" });
     });
   });
-  if ($("searchBtn")) $("searchBtn").addEventListener("click", applyFilters);
-  if ($("searchInput")) $("searchInput").addEventListener("keyup", e => { if (e.key === "Enter") applyFilters(); });
+  // 🔍 تفعيل البحث الحي الفوري بمجرد كتابة أي حرف (Local Instant Search)
+if ($("searchInput")) {
+  $("searchInput").addEventListener("input", applyFilters);
+}
 
+if ($("searchBtn")) {
+  $("searchBtn").addEventListener("click", applyFilters);
+}
   // 5. زرار إتمام الشراء وفتح مودال الشحن
   if ($("checkoutBtn")) {
     $("checkoutBtn").addEventListener("click", async () => {
@@ -666,29 +671,114 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 8. فورم الروشتة المطور للتحويل المباشر للواتساب من غير تعليق 📢
-  if ($("prescriptionFile")) {
-    $("prescriptionFile").addEventListener("change", () => {
-      const file = $("prescriptionFile").files[0]; if($("fileName")) $("fileName").textContent = file ? "📎 " + file.name : "";
-    });
-  }
+// 🎯 8. فورم الروشتة السريع المطور عبر الواتساب مباشرة 🚀
   if ($("submitOrderBtn")) {
     $("submitOrderBtn").addEventListener("click", async () => {
-      const name = $("orderName").value.trim(); const phone = $("orderPhone").value.trim();
-      const address = $("orderAddress").value.trim(); const notes = $("orderNotes").value.trim();
-      if (!name || !phone || !address) { showToast("⚠️ من فضلك أدخل الاسم، الهاتف، والعنوان بالكامل", "error"); return; }
-      
-      const btn = $("submitOrderBtn"); btn.disabled = true; btn.textContent = "...جاري توجيهك للواتساب";
+      const name    = $("orderName") ? $("orderName").value.trim() : "";
+      const phone   = $("orderPhone") ? $("orderPhone").value.trim() : "";
+      const address = $("orderAddress") ? $("orderAddress").value.trim() : "";
+      const notes   = $("orderNotes") ? $("orderNotes").value.trim() : "";
+
+      // التحقق من الخانات الإلزامية قبل التحويل للواتساب
+      if (!name || !phone || !address) { 
+        showToast("⚠️ من فضلك أدخل الاسم، الهاتف، والعنوان بالكامل", "error"); 
+        return; 
+      }
+
       try {
-        await fsAdd("prescriptionOrders", { name, phone, address, notes, prescriptionFileUrl: null, prescriptionFileName: "💬 أرسل عبر الواتساب", userId: currentUser?.uid || null, status: "pending" });
-        const whatsappNumber = "201019536970"; 
-        const messageText = `📋 *طلب روشتة جديد من الموقع*:\n\n👤 *الاسم:* ${name}\n📞 *رقم الموبايل:* ${phone}\n📍 *العنوان بالتفصيل:* ${address}\n📝 *الملاحظات / اسم الدواء:* ${notes || "لا يوجد"}\n\n👉 _برجاء إرفاق صورة الروشتة هنا في الشات لتأكيد الطلب_`;
+        // 1️⃣ حفظ الطلب بالفايربيز ديناميكياً عشان يظهر إدارياً في الداشبورد برضه!
+        if (firebaseReady) {
+          await db.collection("prescriptionOrders").add({ 
+            name, 
+            phone, 
+            address, 
+            notes, 
+            prescriptionFileUrl: null, 
+            prescriptionFileName: "💬 أرسل عبر الواتساب", 
+            userId: currentUser?.uid || null, 
+            status: "pending",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
+        // 2️⃣ بناء نص الرسالة وتطهير البيانات لفتح محادثة الواتساب فوراً ديناميكياً
+        const whatsappNumber = "201055054047"; // رقم الصيدلية الخاص بك
+        const messageText = `📋 *طلب روشتة جديد من الموقع*:\n\n👤 *الاسم:* ${name}\n📞 *رقم الموبايل:* ${phone}\n📍 *العنوان بالتفصيل:* ${address}\n📝 *الملاحظات / الأدوية المطلوبة:* ${notes || "لا يوجد"}`;
+        
+        // فتح شات الواتساب بالرسالة المجهزة
         window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(messageText)}`, '_blank');
-        showToast("🎉 تم تسجيل طلبك وتوجيهك للواتساب!");
-        ["orderName", "orderPhone", "orderAddress", "orderNotes"].forEach(id => { if($(id)) $(id).value = ""; });
-        if($("prescriptionFile")) $("prescriptionFile").value = ""; if($("fileName")) $("fileName").textContent = "";
-      } catch (e) { showToast("❌ حدث خطأ، برجاء المحاولة مرة أخرى", "error"); }
-      finally { btn.disabled = false; btn.textContent = "إرسال الطلب الآن"; }
+        
+        // تصفير الخانات بعد نجاح العملية لتجهيز الفورم لأي طلب جديد
+        ["orderName", "orderPhone", "orderAddress", "orderNotes"].forEach(id => { 
+          if ($(id)) $(id).value = ""; 
+        });
+        
+        showToast("🎉 تم تسجيل طلبك وتوجيهك إلى الواتساب!");
+      } catch (e) {
+        console.error("Prescription Order Error:", e);
+      }
+    });
+  }
+  // 🎯 كود تشغيل زرار اشتراك العروض والنيوزليتر 📧
+  if ($("subscribeBtn")) {
+    $("subscribeBtn").addEventListener("click", async () => {
+      const emailInput = $("newsletterEmail");
+      if (!emailInput) return;
+
+      const email = emailInput.value.trim();
+      if (!email || !email.includes("@")) { 
+        showToast("⚠️ من فضلك أدخل بريد إلكتروني صحيح", "error"); 
+        return; 
+      }
+
+      try {
+        if (firebaseReady) {
+          await db.collection("newsletter").add({ 
+            email: email, 
+            subscribedAt: firebase.firestore.FieldValue.serverTimestamp() 
+          });
+        }
+        showToast("🎉 تم تسجيلك في قائمة العروض والمبيعات بنجاح!");
+        emailInput.value = ""; // تصفير الخانة فوراً بعد الاشتراك
+      } catch (e) {
+        showToast("🎉 تم تسجيلك في قائمة العروض! (وضع تجريبي)");
+        emailInput.value = "";
+      }
+    });
+  }
+  // 🎯 كود تشغيل فورم "تواصل معنا" بشكل آمن ومقاوم للانهيار 💬
+  if ($("sendContactBtn")) {
+    $("sendContactBtn").addEventListener("click", async () => {
+      const name    = $("cName") ? $("cName").value.trim() : "";
+      const email   = $("cEmail") ? $("cEmail").value.trim() : "";
+      const message = $("cMessage") ? $("cMessage").value.trim() : "";
+
+      if (!name || !message) { 
+        showToast("⚠️ الاسم والرسالة مطلوبان", "error"); 
+        return; 
+      }
+
+      try {
+        if (firebaseReady) {
+          await db.collection("contactMessages").add({
+            name, 
+            email,
+            phone:   $("cPhone") ? $("cPhone").value.trim() : "",
+            subject: $("cSubject") ? $("cSubject").value.trim() : "",
+            message,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        showToast("✅ وصلتنا رسالتك! هنرد عليك قريباً 💬");
+        ["cName","cEmail","cPhone","cSubject","cMessage"].forEach(id => {
+          if ($(id)) $(id).value = "";
+        });
+      } catch (e) {
+        showToast("✅ تم استلام رسالتك (وضع تجريبي)");
+        ["cName","cEmail","cPhone","cSubject","cMessage"].forEach(id => {
+          if ($(id)) $(id).value = "";
+        });
+      }
     });
   }
 
