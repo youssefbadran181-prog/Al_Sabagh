@@ -200,7 +200,7 @@ async function loadProducts() {
 }
 
 function updateCategoryCounts() {
-  ["vitamins","skincare","medicine","baby","dental","devices"].forEach(cat => {
+  ["medicine","skincare","medical","baby","personalcare","devices"].forEach(cat => {
     const el = $("count-" + cat);
     if (el) el.textContent = allProducts.filter(p => p.category === cat).length + " منتج";
   });
