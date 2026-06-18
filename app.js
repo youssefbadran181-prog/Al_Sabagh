@@ -824,6 +824,48 @@ if ($("searchBtn")) {
       }
     });
   }
+  // ========================================================
+// 📊 تحديث عداد المنتجات داخل الفئات (Categories) تلقائياً وبشكل حي ⚡
+// ========================================================
+if (typeof db !== 'undefined') {
+  // عمل مستمع حي لكوليكشن المنتجات بالكامل
+  db.collection("products").onSnapshot(snapshot => {
+    
+    // 1️⃣ تفريغ كائن لتجميع عداد كل فئة من السيرفر
+    const categoryCounts = {};
+
+    // 2️⃣ اللوب على كل المنتجات الحالية وحساب تكرار كل فئة
+    snapshot.docs.forEach(doc => {
+      const product = doc.data() || {};
+      const catName = product.category ? String(product.category).trim() : "";
+      
+      if (catName) {
+        categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
+      }
+    });
+
+    // 3️⃣ الذكاء هنا: قراءة الفئات من الـ HTML وتحديث العداد الخاص بها بالملي
+    document.querySelectorAll('.cat-card').forEach(card => {
+      const nameEl = card.querySelector('.cat-name');
+      const countEl = card.querySelector('.cat-count');
+      
+      if (nameEl && countEl) {
+        const currentHTMLCatName = nameEl.textContent.trim();
+        
+        // جلب العدد الفعلي من السيرفر، لو الفئة ملهاش منتجات هتنزل 0 تلقائياً
+        const actualCount = categoryCounts[currentHTMLCatName] || 0;
+        
+        // حقن الرقم الجديد وتحديث الشاشة فوراً
+        countEl.textContent = `${actualCount} منتج`;
+      }
+    });
+    
+    console.log("📊 [PharmaCare] تم تحديث عدادات الفئات حياً بناءً على المخزون الحالي!");
+
+  }, error => {
+    console.error("❌ [PharmaCare] خطأ أثناء احتساب عداد الفئات:", error);
+  });
+}
 
   // تشغيل السستم الأساسي
   initFirebase();
