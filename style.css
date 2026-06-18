@@ -858,129 +858,79 @@ section { padding: 80px 24px; }
 /* ========================
    RESPONSIVE (نسخة الموبايل المضمونة) 🎉
 ======================== */
-@media (max-width: 992px) {
-  /* 1️⃣ إجبار قسم الـ Hero على إبقاء العمودين جنب بعض بدون حدوث Wrap */
-  .hero { 
-    grid-template-columns: 1.1fr 0.9fr !important; 
-    gap: 16px !important;
-    padding: 90px 12px 40px !important;
-    align-items: center !important;
-  }
-  .hero-image {
-    display: flex !important; /* إبقاء الكرت العائم ظاهراً دايماً */
-    justify-content: center !important;
-  }
-  .hero-card {
-    padding: 14px !important;
-    max-width: 100% !important;
-    animation: none !important; /* إيقاف الأنيميشن المزعج على شاشات الموبايل */
-  }
-  .hero-card-header {
-    font-size: 14px !important;
-    margin-bottom: 10px !important;
-  }
-  .card-item {
-    padding: 6px 10px !important;
-    font-size: 11px !important;
-    gap: 6px !important;
-  }
-
-  /* تصغير نصوص وقوائم الـ Hero لتناسب الحجم المدمج */
-  .hero-content h1 {
-    font-size: clamp(18px, 2.5vw, 26px) !important;
-    margin-bottom: 10px !important;
-  }
-  .hero-content p {
-    font-size: 12px !important;
-    line-height: 1.6 !important;
-    margin-bottom: 20px !important;
-    max-width: 100% !important;
-  }
-  .hero-buttons {
+@media (max-width: 768px) {
+  /* 1️⃣ توزيع عناصر الهيدر بالعدل لمنع التداخل (يمين وشمال بالظبط) 🏛️ */
+  .nav-container {
+    justify-content: space-between !important;
+    padding: 0 12px !important;
     gap: 8px !important;
   }
-  .hero-buttons .btn {
-    padding: 8px 16px !important;
-    font-size: 12px !important;
-  }
-  .hero-stats {
-    gap: 16px !important;
-  }
-  .stat strong {
-    font-size: 18px !important;
-  }
-  .stat span {
-    font-size: 11px !important;
-  }
-}
-
-@media (max-width: 768px) {
-  /* 2️⃣ إخفاء زرار الهامبرجر نهائياً وإجبار اللينكات على البقاء أفقية في سطر واحد 🏛️ */
-  .hamburger { 
-    display: none !important; 
-  }
   
-  .nav-links { 
-    display: flex !important; 
-    flex-direction: row !important; 
-    position: static !important; 
-    padding: 0 !important; 
-    background: transparent !important; 
-    border: none !important; 
-    gap: 2px !important;
-    margin: 0 auto !important;
-  }
-  
-  /* تصغير اللينكات عشان تكفي السطر كله جنب بعض */
-  .nav-links a {
-    padding: 4px 6px !important;
-    font-size: 11px !important;
-    white-space: nowrap !important;
-  }
-
-  /* إحكام السيطرة على مسافات الهيدر لمنع أي Overflow جانبي */
-  .nav-container {
-    padding: 0 8px !important;
-    gap: 4px !important;
-    justify-content: space-between !important;
-    height: 60px !important;
-  }
-  .nav-logo {
-    font-size: 14px !important;
-    gap: 2px !important;
-  }
-  .logo-icon {
-    font-size: 16px !important;
-  }
-  
+  /* 2️⃣ تصغير حجم الأزرار والخطوط جوه الهيدر عشان تكفي شاشة الموبايل الصغير */
   .nav-actions {
-    gap: 4px !important;
+    gap: 6px !important;
   }
   .nav-actions .icon-btn, 
   .nav-actions #authBtn {
-    padding: 5px 8px !important;
-    font-size: 10px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
     white-space: nowrap !important;
   }
+  .nav-logo {
+    font-size: 16px !important;
+    gap: 4px !important;
+  }
+  .logo-icon {
+    font-size: 18px !important;
+  }
 
-  /* 3️⃣ باقي المكونات لضمان التوافقية الكاملة */
-  .trust-bar { gap: 12px !important; padding: 10px !important; }
-  .trust-item { font-size: 11px !important; }
+  /* 3️⃣ الإخفاء الصريح والكامل للكرت الأزرق العائم لمنع تدمير وعرض الصفحة 🚫 */
+  .hero-card {
+    display: none !important;
+  }
+
+  /* 4️⃣ باقي التنسيقات المأمنة والمطورة للموقع */
+  .nav-links { 
+    display: none !important; 
+    flex-direction: column !important; 
+    position: fixed !important; 
+    top: 68px !important; 
+    right: 0 !important; 
+    left: 0 !important; 
+    background: var(--navy-mid) !important; 
+    border-bottom: 1px solid var(--border) !important; 
+    padding: 16px !important; 
+    z-index: 999 !important; 
+  }
+  .nav-links.open { display: flex !important; }
+  .hamburger { display: block !important; color: var(--white) !important; font-size: 24px !important; cursor: pointer !important; }
+  
+  .trust-bar { gap: 16px !important; padding: 12px !important; }
+  .trust-item { font-size: 12px !important; }
   
   .footer-grid { grid-template-columns: 1fr !important; }
   .form-row { grid-template-columns: 1fr !important; }
   .newsletter-form { flex-direction: column !important; gap: 10px !important; }
   .cart-drawer { width: 100vw !important; }
   
-  .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; gap: 10px !important; }
-  .cat-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
+  .products-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; gap: 12px !important; }
+  .cat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
   
-  .product-image { height: 120px !important; font-size: 36px !important; }
-  .product-name { font-size: 12px !important; }
-  .price-current { font-size: 14px !important; }
+  .product-image { height: 140px !important; font-size: 40px !important; }
+  .product-name { font-size: 13px !important; }
+  .price-current { font-size: 15px !important; }
   
-  .order-form, .contact-form { padding: 16px 12px !important; }
-  .contact-form .btn { float: none !important; width: 100% !important; }
-  .search-bar { width: 100% !important; max-width: 100% !important; }
-  .modal { max-width: 95% !important; padding: 16px !important; }
+  .order-form, .contact-form {
+    padding: 20px 16px !important;
+  }
+  .contact-form .btn {
+    float: none !important;
+    width: 100% !important;
+    margin-top: 10px;
+  }
+  .search-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .modal { max-width: 95% !important; padding: 20px 16px !important; }
 }
