@@ -1005,4 +1005,85 @@ section { padding: 80px 24px; }
     max-width: fit-content;
     margin: 0 auto !important;
   }
+  .nav-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: 68px !important;
+    padding: 0 16px !important;
+  }
+
+  /* 1️⃣ إجبار اللوجو على الاستقرار في أقصى اليمين دايماً */
+  .nav-logo {
+    font-size: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    order: 1 !important; 
+  }
+
+  /* 2️⃣ تجميع عناصر التحكم وإعطاؤها الترتيب الثاني */
+  .nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    order: 2 !important;
+  }
+
+  /* 3️⃣ تحويل زرار السلة لدائرة مثالية هندسياً ومطابقة للصورة */
+  #cartBtn, .icon-btn.cart-btn {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(10, 191, 184, 0.12) !important;
+    order: 1 !important; /* يضمن ظهور السلة على يمين زرار الدخول */
+  }
+
+  /* 4️⃣ ترحيل بادج رقم السلة الأحمر (0) ليكون في أسفل المنتصف بالملي وبشكل بيضاوي فخم */
+  .cart-count {
+    position: absolute !important;
+    bottom: -2px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: var(--red) !important;
+    color: white !important;
+    border-radius: 50px !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    min-width: 18px !important;
+    text-align: center !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;
+  }
+
+  /* 5️⃣ ضبط زرار تسجيل الدخول ليصبح كبسولة بيضاوية ناعمة ومتناسقة */
+  #authBtn {
+    padding: 6px 14px !important;
+    font-size: 12px !important;
+    border-radius: 50px !important;
+    height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    order: 2 !important; /* يضمن ظهوره على يسار السلة */
+  }
+
+  /* 6️⃣ تثبيت زرار الهامبرجر منيو في أقصى اليسار تماماً وبمحاذاة عمودية سنتر */
+  .hamburger {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 24px !important;
+    color: var(--white) !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    order: 3 !important; 
+  }
 }
